@@ -38,11 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'twobeats_account',
-    'twobeats_upload',
-    'twobeats_music_explore',
-    'twobeats_worldcup',
-    'twobeats_video_explore',
+    'apps.twobeats_account',
+    'apps.twobeats_upload',
+    'apps.twobeats_music_explore',
+    'apps.twobeats_worldcup',
+    'apps.twobeats_video_explore',
 ]
 
 MIDDLEWARE = [

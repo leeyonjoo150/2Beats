@@ -1,8 +1,6 @@
-# twobeats_music_explore/models.py
-
 from django.db import models
 from django.conf import settings
-from twobeats_upload.models import Music
+
 
 class MusicLike(models.Model):
     """음악 좋아요"""
@@ -14,7 +12,7 @@ class MusicLike(models.Model):
         db_column='ml_user_id'
     )
     music = models.ForeignKey(
-        Music,
+       'twobeats_upload.Music',
         on_delete=models.CASCADE,
         verbose_name='음악',
         db_column='ml_music_id'
@@ -45,7 +43,7 @@ class MusicComment(models.Model):
         db_column='mc_user_id'
     )
     music = models.ForeignKey(
-        Music,
+        'twobeats_upload.Music',
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='음악',

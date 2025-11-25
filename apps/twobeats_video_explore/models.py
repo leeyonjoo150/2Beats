@@ -5,7 +5,7 @@ from django.db import models
 
 from django.db import models
 from django.conf import settings
-from twobeats_upload.models import Video
+
 
 class VideoLike(models.Model):
     """영상 좋아요"""
@@ -17,7 +17,7 @@ class VideoLike(models.Model):
         db_column='vl_user_id'
     )
     video = models.ForeignKey(
-        Video,
+       'twobeats_upload.Video',
         on_delete=models.CASCADE,
         verbose_name='영상',
         db_column='vl_video_id'
@@ -48,7 +48,7 @@ class VideoComment(models.Model):
         db_column='vc_user_id'
     )
     video = models.ForeignKey(
-        Video,
+       'twobeats_upload.Video',
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='영상',

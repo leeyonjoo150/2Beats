@@ -2,7 +2,7 @@
 
 from django.db import models
 from django.conf import settings
-from twobeats_upload.models import Music
+
 
 class WorldCupResult(models.Model):
     """월드컵 우승 결과"""
@@ -14,7 +14,7 @@ class WorldCupResult(models.Model):
         db_column='world_cup_id'
     )
     winner_music = models.ForeignKey(
-        Music,
+        'twobeats_upload.Music',
         on_delete=models.CASCADE,
         verbose_name='우승곡',
         db_column='world_cup_music'
