@@ -7,6 +7,8 @@ urlpatterns = [
     # 검색
     path('search/', views.search_music, name='search'),
     
+    # 통합 차트
+    path('chart/', views.chart_all, name='chart_all'),
     # 차트
     path('chart/popular/', views.chart_popular, name='chart_popular'),
     path('chart/latest/', views.chart_latest, name='chart_latest'),
@@ -20,4 +22,5 @@ urlpatterns = [
     
     # 댓글
     path('comment/<int:music_id>/', views.music_comment, name='comment'),
+    path('comment/delete/<int:comment_id>/', views.comment_delete, name='comment_delete'),
 ]

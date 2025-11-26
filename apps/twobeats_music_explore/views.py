@@ -4,9 +4,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Q
-from apps.twobeats_upload.models import Music, Tag  # Tag 추가!
+from apps.twobeats_upload.models import Music, Tag  
 from .models import MusicLike, MusicComment
-
+from django.contrib import messages
 
 def search_music(request):
     """음악 검색"""
@@ -155,3 +155,31 @@ def music_comment(request, music_id):
             )
     
     return redirect('music_explore:detail', music_id=music_id)
+
+@login_required
+def comment_delete(request, comment_id):
+    """댓글 삭제"""
+    comment = get_object_or_404(MusicComment, pk=comment_id)
+    music_id = comment.music.id
+    
+    # 본인 댓글만 삭제 가능
+    if comment.user == request.user:
+        comment.delete()
+        messages.success(request, '댓글이 삭제되었습니다.')
+    else:
+        messages.error(request, '본인의 댓글만 삭제할 수 있습니다.')
+    
+    return redirect('music_explore:detail', music_id=music_id)
+
+def chart_all(request):
+    """통합 차트 (탭)"""
+    popular_musics = Music.objects.all().order_by('-music_count')[:50]
+    latest_musics = Music.objects.all().order_by('-music_created_at')[:50]
+    liked_musics = Music.objects.all().order_by('-music_like_count')[:50]
+    
+    context = {
+        'popular_musics': popular_musics,
+        'latest_musics': latest_musics,
+        'liked_musics': liked_musics,
+    }
+    return render(request, 'music_explore/chart_all.html', context)

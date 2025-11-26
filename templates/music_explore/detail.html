@@ -1,8 +1,35 @@
+<!-- templates/music_explore/detail.html -->
+
 {% extends 'music_explore/base.html' %}
 
 {% block title %}{{ music.music_title }} - TwoBeats{% endblock %}
 
 {% block content %}
+
+<!-- 메시지 표시 -->
+{% if messages %}
+    <div style="margin-bottom: 1rem;">
+        {% for message in messages %}
+            <div style="
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 0.5rem;
+                {% if message.tags == 'success' %}
+                    background-color: #d4edda;
+                    color: #155724;
+                    border: 1px solid #c3e6cb;
+                {% elif message.tags == 'error' %}
+                    background-color: #f8d7da;
+                    color: #721c24;
+                    border: 1px solid #f5c6cb;
+                {% endif %}
+            ">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
 <!-- 음악 정보 -->
 <div class="card">
     <div style="display: flex; gap: 2rem; align-items: start;">
@@ -43,7 +70,7 @@
                 <strong>재생수:</strong> {{ music.music_count }}회
             </p>
             <p style="margin-bottom: 1.5rem;">
-                <strong>좋아요:</strong> {{ music.music_like_count }}
+                <strong>좋아요:</strong> <span id="like-count">{{ music.music_like_count }}</span>
             </p>
             
             <!-- 태그 -->
@@ -66,17 +93,34 @@
             
             <!-- 버튼들 -->
             <div style="display: flex; gap: 1rem;">
-                <!-- 좋아요 버튼 -->
-                <form method="POST" action="{% url 'music_explore:like' music.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn {% if is_liked %}btn-primary{% else %}btn-secondary{% endif %}">
-                        {% if is_liked %}❤️ 좋아요 취소{% else %}🤍 좋아요{% endif %}
+                <!-- 좋아요 버튼 (AJAX) -->
+                {% if user.is_authenticated %}
+                    <button 
+                        id="like-btn"
+                        onclick="toggleLike({{ music.id }})"
+                        class="btn {% if is_liked %}btn-primary{% else %}btn-secondary{% endif %}"
+                        data-liked="{% if is_liked %}true{% else %}false{% endif %}"
+                    >
+                        <span id="like-text">{% if is_liked %}❤️ 좋아요 취소{% else %}🤍 좋아요{% endif %}</span>
                     </button>
-                </form>
+                {% else %}
+                    <a href="/admin/" class="btn btn-secondary">🤍 좋아요 (로그인 필요)</a>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- 음악 재생 플레이어 -->
+{% if music.music_root %}
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">🎵 음악 재생</h2>
+    <audio controls style="width: 100%;">
+        <source src="{{ music.music_root.url }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+</div>
+{% endif %}
 
 <!-- 댓글 -->
 <div class="card">
@@ -112,11 +156,35 @@
                     background-color: #f9f9f9;
                     border-radius: 4px;
                 ">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <strong>{{ comment.user.username }}</strong>
-                        <span style="color: #999; font-size: 0.9rem;">
-                            {{ comment.created_at|date:"Y-m-d H:i" }}
-                        </span>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; align-items: center;">
+                        <div>
+                            <strong>{{ comment.user.username }}</strong>
+                            <span style="color: #999; font-size: 0.9rem; margin-left: 1rem;">
+                                {{ comment.created_at|date:"Y-m-d H:i" }}
+                            </span>
+                        </div>
+                        
+                        <!-- 삭제 버튼 (본인 댓글만) -->
+                        {% if user == comment.user %}
+                            <form method="POST" 
+                                  action="{% url 'music_explore:comment_delete' comment.id %}" 
+                                  style="margin: 0;"
+                                  onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                                {% csrf_token %}
+                                <button type="submit" style="
+                                    background: none;
+                                    border: none;
+                                    color: #ff4444;
+                                    cursor: pointer;
+                                    font-size: 0.9rem;
+                                    padding: 0.3rem 0.6rem;
+                                    transition: color 0.3s;
+                                " onmouseover="this.style.color='#cc0000'" 
+                                   onmouseout="this.style.color='#ff4444'">
+                                    🗑️ 삭제
+                                </button>
+                            </form>
+                        {% endif %}
                     </div>
                     <p>{{ comment.content }}</p>
                 </div>
@@ -128,4 +196,63 @@
         </p>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// CSRF 토큰 가져오기
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 좋아요 토글 (AJAX)
+function toggleLike(musicId) {
+    const likeBtn = document.getElementById('like-btn');
+    const likeText = document.getElementById('like-text');
+    const likeCount = document.getElementById('like-count');
+    const isLiked = likeBtn.dataset.liked === 'true';
+    
+    // 서버에 요청
+    fetch(`/music/like/${musicId}/`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        // UI 업데이트
+        if (data.is_liked) {
+            likeBtn.classList.remove('btn-secondary');
+            likeBtn.classList.add('btn-primary');
+            likeText.textContent = '❤️ 좋아요 취소';
+            likeBtn.dataset.liked = 'true';
+        } else {
+            likeBtn.classList.remove('btn-primary');
+            likeBtn.classList.add('btn-secondary');
+            likeText.textContent = '🤍 좋아요';
+            likeBtn.dataset.liked = 'false';
+        }
+        
+        // 좋아요 수 업데이트
+        likeCount.textContent = data.like_count;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    });
+}
+</script>
 {% endblock %}

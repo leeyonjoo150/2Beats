@@ -1,0 +1,280 @@
+{% extends 'music_explore/base.html' %}
+
+{% block title %}차트 - TwoBeats{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 탭 스타일 */
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid #eee;
+        margin-bottom: 2rem;
+    }
+    
+    .tab {
+        padding: 1rem 2rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #666;
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .tab:hover {
+        color: #1db954;
+    }
+    
+    .tab.active {
+        color: #1db954;
+        border-bottom-color: #1db954;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-bottom: 1.5rem;">📊 음악 차트</h1>
+    
+    <!-- 탭 버튼 -->
+    <div class="tabs">
+        <button id="popular-btn" class="tab active" onclick="showTab('popular', this)">인기 차트</button>
+        <button id="latest-btn" class="tab" onclick="showTab('latest', this)">최신 차트</button>
+        <button id="liked-btn" class="tab" onclick="showTab('liked', this)">좋아요 차트</button>
+    </div>
+</div>
+
+<!-- 인기 차트 -->
+<div id="popular-tab" class="tab-content active">
+    <div class="card">
+        <h2 style="margin-bottom: 1rem; color: #1db954;">🔥 인기 차트 (재생수순)</h2>
+        {% if popular_musics %}
+            <div style="display: grid; gap: 1rem;">
+                {% for music in popular_musics %}
+                    <div style="
+                        padding: 1rem; 
+                        border: 1px solid #eee; 
+                        border-radius: 8px;
+                        display: flex;
+                        gap: 1rem;
+                        align-items: center;
+                        transition: all 0.3s;
+                    " onmouseover="this.style.backgroundColor='#f9f9f9'" 
+                       onmouseout="this.style.backgroundColor='white'">
+                        
+                        <!-- 순위 -->
+                        <div style="
+                            font-size: 2rem; 
+                            font-weight: bold; 
+                            color: #1db954;
+                            min-width: 50px;
+                            text-align: center;
+                        ">
+                            {{ forloop.counter }}
+                        </div>
+                        
+                        <!-- 썸네일 -->
+                        <div style="min-width: 80px; max-width: 80px;">
+                            {% if music.music_thumbnail %}
+                                <img src="{{ music.music_thumbnail.url }}" 
+                                     alt="{{ music.music_title }}"
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                            {% else %}
+                                <div style="
+                                    width: 80px; height: 80px; 
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    border-radius: 8px;
+                                    display: flex; align-items: center; justify-content: center;
+                                    font-size: 2rem;
+                                ">🎵</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 정보 -->
+                        <div style="flex: 1;">
+                            <h3 style="margin-bottom: 0.5rem;">
+                                <a href="{% url 'music_explore:detail' music.id %}" 
+                                   style="color: #333; text-decoration: none;">
+                                    {{ music.music_title }}
+                                </a>
+                            </h3>
+                            <p style="color: #666; margin-bottom: 0.3rem;">{{ music.music_singer }}</p>
+                            <p style="color: #999; font-size: 0.9rem;">
+                                {{ music.get_music_type_display }} | 
+                                재생 {{ music.music_count }}회 | 
+                                좋아요 {{ music.music_like_count }}
+                                {% if music.tags.all %}
+                                    | {% for tag in music.tags.all %}
+                                        <span style="color: #1db954;">#{{ tag.name }}</span>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <!-- 재생 버튼 -->
+                        <a href="{% url 'music_explore:detail' music.id %}" class="btn btn-primary">재생 ▶</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">차트 데이터가 없습니다.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 최신 차트 -->
+<div id="latest-tab" class="tab-content">
+    <div class="card">
+        <h2 style="margin-bottom: 1rem; color: #1db954;">🆕 최신 차트 (업로드순)</h2>
+        {% if latest_musics %}
+            <div style="display: grid; gap: 1rem;">
+                {% for music in latest_musics %}
+                    <div style="
+                        padding: 1rem; 
+                        border: 1px solid #eee; 
+                        border-radius: 8px;
+                        display: flex;
+                        gap: 1rem;
+                        align-items: center;
+                        transition: all 0.3s;
+                    " onmouseover="this.style.backgroundColor='#f9f9f9'" 
+                       onmouseout="this.style.backgroundColor='white'">
+                        
+                        <div style="font-size: 2rem; font-weight: bold; color: #1db954; min-width: 50px; text-align: center;">
+                            {{ forloop.counter }}
+                        </div>
+                        
+                        <div style="min-width: 80px; max-width: 80px;">
+                            {% if music.music_thumbnail %}
+                                <img src="{{ music.music_thumbnail.url }}" 
+                                     alt="{{ music.music_title }}"
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                            {% else %}
+                                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">🎵</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div style="flex: 1;">
+                            <h3 style="margin-bottom: 0.5rem;">
+                                <a href="{% url 'music_explore:detail' music.id %}" style="color: #333; text-decoration: none;">
+                                    {{ music.music_title }}
+                                </a>
+                            </h3>
+                            <p style="color: #666; margin-bottom: 0.3rem;">{{ music.music_singer }}</p>
+                            <p style="color: #999; font-size: 0.9rem;">
+                                {{ music.get_music_type_display }} | 
+                                재생 {{ music.music_count }}회 | 
+                                좋아요 {{ music.music_like_count }}
+                                {% if music.tags.all %}
+                                    | {% for tag in music.tags.all %}
+                                        <span style="color: #1db954;">#{{ tag.name }}</span>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <a href="{% url 'music_explore:detail' music.id %}" class="btn btn-primary">재생 ▶</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">차트 데이터가 없습니다.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 좋아요 차트 -->
+<div id="liked-tab" class="tab-content">
+    <div class="card">
+        <h2 style="margin-bottom: 1rem; color: #1db954;">❤️ 좋아요 차트 (좋아요순)</h2>
+        {% if liked_musics %}
+            <div style="display: grid; gap: 1rem;">
+                {% for music in liked_musics %}
+                    <div style="
+                        padding: 1rem; 
+                        border: 1px solid #eee; 
+                        border-radius: 8px;
+                        display: flex;
+                        gap: 1rem;
+                        align-items: center;
+                        transition: all 0.3s;
+                    " onmouseover="this.style.backgroundColor='#f9f9f9'" 
+                       onmouseout="this.style.backgroundColor='white'">
+                        
+                        <div style="font-size: 2rem; font-weight: bold; color: #1db954; min-width: 50px; text-align: center;">
+                            {{ forloop.counter }}
+                        </div>
+                        
+                        <div style="min-width: 80px; max-width: 80px;">
+                            {% if music.music_thumbnail %}
+                                <img src="{{ music.music_thumbnail.url }}" 
+                                     alt="{{ music.music_title }}"
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                            {% else %}
+                                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">🎵</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div style="flex: 1;">
+                            <h3 style="margin-bottom: 0.5rem;">
+                                <a href="{% url 'music_explore:detail' music.id %}" style="color: #333; text-decoration: none;">
+                                    {{ music.music_title }}
+                                </a>
+                            </h3>
+                            <p style="color: #666; margin-bottom: 0.3rem;">{{ music.music_singer }}</p>
+                            <p style="color: #999; font-size: 0.9rem;">
+                                {{ music.get_music_type_display }} | 
+                                재생 {{ music.music_count }}회 | 
+                                좋아요 {{ music.music_like_count }}
+                                {% if music.tags.all %}
+                                    | {% for tag in music.tags.all %}
+                                        <span style="color: #1db954;">#{{ tag.name }}</span>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <a href="{% url 'music_explore:detail' music.id %}" class="btn btn-primary">재생 ▶</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">차트 데이터가 없습니다.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(tabName, element) {
+    // 모든 탭 버튼 비활성화
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // 모든 탭 콘텐츠 숨기기
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // 클릭한 탭 버튼 활성화
+    element.classList.add('active');
+    
+    // 선택한 탭 콘텐츠 표시
+    document.getElementById(tabName + '-tab').classList.add('active');
+}
+</script>
+{% endblock %}
