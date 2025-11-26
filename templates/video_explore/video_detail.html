@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ video.video_title }} - 2Beats</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #FFFFFF;
+            color: #000000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 뒤로가기 버튼 */
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* 영상 플레이어 */
+        .video-player {
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .video-player video {
+            width: 100%;
+            max-height: 600px;
+        }
+
+        /* 영상 제목 */
+        .video-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        /* 액션바 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .like-btn.liked {
+            background-color: #ffe0e0;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .video-meta {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 가수 정보 */
+        .artist-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .artist-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00CD3C;
+        }
+
+        /* 영상 설명 */
+        .video-description {
+            padding: 20px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .video-description h3 {
+            margin-bottom: 10px;
+        }
+
+        .video-description p {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* 태그 */
+        .tags-section {
+            margin-bottom: 20px;
+        }
+
+        .tags-section h3 {
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #e8f5e9;
+            color: #00CD3C;
+            border-radius: 15px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        /* 댓글 섹션 */
+        .comments-section {
+            margin-top: 40px;
+        }
+
+        .comments-section h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .comment-form {
+            margin-bottom: 30px;
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #00CD3C;
+        }
+
+        .comment-form button {
+            margin-top: 10px;
+            padding: 12px 30px;
+            background-color: #00CD3C;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .comment-form button:hover {
+            background-color: #00b835;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .comment-item {
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .comment-date {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .comment-content {
+            color: #333;
+            line-height: 1.5;
+        }
+
+        /* 관련 영상 */
+        .related-videos {
+            margin-top: 40px;
+        }
+
+        .related-videos h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .related-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .related-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .related-card .thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .related-card .info {
+            padding: 12px;
+        }
+
+        .related-card .title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .related-card .singer {
+            color: #00CD3C;
+            font-size: 13px;
+        }
+
+        /* 로그인 필요 메시지 */
+        .login-required {
+            padding: 15px;
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .action-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .related-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 뒤로가기 버튼 -->
+        <a href="{% url 'video_explore:video_list' %}" class="back-button">← 목록으로</a>
+
+        <!-- 영상 플레이어 -->
+        <div class="video-player">
+            {% if video.video_root %}
+            <video controls>
+                <source src="{{ video.video_root.url }}" type="video/mp4">
+                브라우저가 비디오를 지원하지 않습니다.
+            </video>
+            {% else %}
+            <div style="padding: 100px; text-align: center; color: white;">
+                영상 파일이 없습니다.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 영상 제목 -->
+        <h1 class="video-title">{{ video.video_title }}</h1>
+
+        <!-- 액션바 -->
+        <div class="action-bar">
+            <div class="action-buttons">
+                {% if user.is_authenticated %}
+                <button class="action-btn like-btn {% if is_liked %}liked{% endif %}"
+                        onclick="toggleLike({{ video.pk }})">
+                    <span id="like-icon">{% if is_liked %}❤️{% else %}🤍{% endif %}</span>
+                    좋아요 <span id="like-count">{{ like_count }}</span>
+                </button>
+                {% else %}
+                <button class="action-btn" onclick="alert('로그인이 필요합니다.')">
+                    🤍 좋아요 {{ like_count }}
+                </button>
+                {% endif %}
+
+                {% if video.video_root %}
+                <a href="{{ video.video_root.url }}" download class="action-btn" style="text-decoration: none; color: inherit;">
+                    📥 다운로드
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="video-meta">
+                📅 {{ video.video_created_at|date:"Y.m.d" }} |
+                👁️ 조회수 {{ video.video_views|default:0 }}
+            </div>
+        </div>
+
+        <!-- 가수 정보 -->
+        <div class="artist-info">
+            <div>
+                <span style="color: #666;">아티스트</span>
+                <div class="artist-name">{{ video.video_singer }}</div>
+            </div>
+        </div>
+
+        <!-- 영상 설명 -->
+        {% if video.video_detail %}
+        <div class="video-description">
+            <h3>영상 설명</h3>
+            <p>{{ video.video_detail|linebreaks }}</p>
+        </div>
+        {% endif %}
+
+        <!-- 태그 -->
+        {% if tags %}
+        <div class="tags-section">
+            <h3>태그</h3>
+            <div>
+                {% for tag in tags %}
+                <span class="tag">#{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 댓글 섹션 -->
+        <div class="comments-section">
+            <h3>💬 댓글 {{ comments.count }}</h3>
+
+            {% if user.is_authenticated %}
+            <!-- 댓글 작성 폼 -->
+            <div class="comment-form">
+                <textarea id="comment-content" placeholder="댓글을 작성해주세요..."></textarea>
+                <button onclick="addComment({{ video.pk }})">등록</button>
+            </div>
+            {% else %}
+            <div class="login-required">
+                댓글을 작성하려면 로그인이 필요합니다.
+            </div>
+            {% endif %}
+
+            <!-- 댓글 목록 -->
+            <div class="comment-list" id="comment-list">
+                {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author">👤 {{ comment.user.username }}</span>
+                        <span class="comment-date">{{ comment.created_at|date:"Y.m.d H:i" }}</span>
+                    </div>
+                    <div class="comment-content">{{ comment.content }}</div>
+                </div>
+                {% empty %}
+                <p style="text-align: center; color: #999; padding: 40px 0;">
+                    아직 댓글이 없습니다. 첫 댓글을 작성해보세요!
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 관련 영상 -->
+        {% if related_videos %}
+        <div class="related-videos">
+            <h3>관련 영상</h3>
+            <div class="related-grid">
+                {% for related in related_videos %}
+                <a href="{% url 'video_explore:video_detail' related.pk %}" class="related-card">
+                    {% if related.video_thumbnail %}
+                    <img src="{{ related.video_thumbnail.url }}" alt="{{ related.video_title }}" class="thumbnail">
+                    {% else %}
+                    <img src="https://via.placeholder.com/400x225?text=No+Thumbnail" alt="No Thumbnail" class="thumbnail">
+                    {% endif %}
+                    <div class="info">
+                        <div class="title">{{ related.video_title }}</div>
+                        <div class="singer">{{ related.video_singer }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // CSRF 토큰 가져오기
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // 좋아요 토글
+        function toggleLike(videoId) {
+            fetch(`/video/${videoId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 좋아요 버튼 업데이트
+                    const likeBtn = document.querySelector('.like-btn');
+                    const likeIcon = document.getElementById('like-icon');
+                    const likeCount = document.getElementById('like-count');
+
+                    if (data.liked) {
+                        likeBtn.classList.add('liked');
+                        likeIcon.textContent = '❤️';
+                    } else {
+                        likeBtn.classList.remove('liked');
+                        likeIcon.textContent = '🤍';
+                    }
+
+                    likeCount.textContent = data.like_count;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('좋아요 처리 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 댓글 작성
+        function addComment(videoId) {
+            const content = document.getElementById('comment-content').value.trim();
+
+            if (!content) {
+                alert('댓글 내용을 입력해주세요.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('content', content);
+
+            fetch(`/video/${videoId}/comment/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 댓글 입력창 비우기
+                    document.getElementById('comment-content').value = '';
+
+                    // 댓글 목록에 새 댓글 추가
+                    const commentList = document.getElementById('comment-list');
+
+                    // "아직 댓글이 없습니다" 메시지 제거
+                    const emptyMessage = commentList.querySelector('p');
+                    if (emptyMessage) {
+                        emptyMessage.remove();
+                    }
+
+                    const newComment = document.createElement('div');
+                    newComment.className = 'comment-item';
+                    newComment.innerHTML = `
+                        <div class="comment-header">
+                            <span class="comment-author">👤 ${data.comment.username}</span>
+                            <span class="comment-date">${data.comment.created_at}</span>
+                        </div>
+                        <div class="comment-content">${data.comment.content}</div>
+                    `;
+
+                    // 최상단에 추가
+                    commentList.insertBefore(newComment, commentList.firstChild);
+
+                    alert('댓글이 등록되었습니다.');
+                } else {
+                    alert(data.error || '댓글 작성 중 오류가 발생했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('댓글 작성 중 오류가 발생했습니다.');
+            });
+        }
+    </script>
+</body>
+</html>

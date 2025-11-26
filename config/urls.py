@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('video/', include('apps.twobeats_video_explore.urls')),
 ]
 
 if settings.DEBUG:
