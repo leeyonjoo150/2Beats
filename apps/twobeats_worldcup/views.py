@@ -75,9 +75,11 @@ def get_candidates(request):
 
         # A-2. 특정 장르 내 랭킹 (기존 로직 유지)
         else:
-            candidates = base_musics.filter(music_type=genre).annotate(
+            top_candidates = base_musics.filter(music_type=genre).annotate(
                 total_score=Coalesce(Sum('worldcupresult__wc_score'), 0)
             ).order_by('-total_score')[:count]
+            candidates = list(top_candidates)
+            random.shuffle(candidates)
 
     # ---------------------------------------------------------
     # CASE B: 랜덤 모드 (기존 로직)
