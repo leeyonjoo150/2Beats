@@ -3,6 +3,8 @@ import random
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from rest_framework.decorators import api_view
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
@@ -100,6 +102,8 @@ def get_candidates(request):
 
 
 @api_view(['POST'])
+@authentication_classes([]) # 인증 무시
+@permission_classes([AllowAny]) # 권한 무시
 def save_game_result(request):
     """
     월드컵 결과 저장 API (트랜잭션 처리)
