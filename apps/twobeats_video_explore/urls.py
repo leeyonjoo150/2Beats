@@ -25,4 +25,10 @@ urlpatterns = [
 
     # 댓글 작성 (AJAX)
     path('<int:video_id>/comment/', views.add_comment, name='add_comment'),
+
+    # 댓글 수정 (AJAX)
+    path('comment/<int:comment_id>/edit/', views.edit_comment, name='edit_comment'),
+
+    # 댓글 삭제 (AJAX)
+    path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 ]

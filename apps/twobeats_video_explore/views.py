@@ -29,13 +29,13 @@ def video_list(request, video_type=None):
             Q(video_singer__icontains=search_query)
         )
 
-    # 인기 영상 TOP3 (점수 기반: 조회수*5 + 좋아요*3 + 댓글수*2)
+    # 인기 영상 TOP3 (점수 기반: 조회수*5 + 재생수*4 + 좋아요*3 + 댓글수*2)
     top_videos = videos.annotate(
         like_count=Count('videolike', distinct=True),
         comment_count=Count('comments', distinct=True)
     ).annotate(
         popularity_score=ExpressionWrapper(
-            (F('video_views') * 5) + (F('like_count') * 3) + (F('comment_count') * 2),
+            (F('video_views') * 5) + (F('video_play_count') * 4) + (F('like_count') * 3) + (F('comment_count') * 2),
             output_field=IntegerField()
         )
     ).order_by('-popularity_score')[:3]
@@ -109,7 +109,12 @@ def video_detail(request, video_id):
     like_count = VideoLike.objects.filter(video=video).count()
 
     # 댓글 목록 (최신순)
-    comments = VideoComment.objects.filter(video=video).select_related('user')
+    comments = VideoComment.objects.filter(video=video).select_related('user').order_by('-created_at')
+
+    # 댓글 페이지네이션 (한 페이지당 10개)
+    paginator = Paginator(comments, 10)
+    page_number = request.GET.get('page', 1)
+    comments_page = paginator.get_page(page_number)
 
     # 태그 목록
     tags = video.tags.all()
@@ -128,7 +133,7 @@ def video_detail(request, video_id):
         'video': video,
         'is_liked': is_liked,
         'like_count': like_count,
-        'comments': comments,
+        'comments': comments_page,
         'tags': tags,
         'related_videos': related_videos,
         'formatted_time': formatted_time,
@@ -231,5 +236,64 @@ def add_comment(request, video_id):
             'username': comment.user.username,
             'content': comment.content,
             'created_at': comment.created_at.strftime('%Y.%m.%d %H:%M'),
+            'user_image': comment.user.profile_image.url if comment.user.profile_image else None,
         },
+    })
+
+
+@require_POST
+@login_required
+def edit_comment(request, comment_id):
+    """댓글 수정 (AJAX)"""
+
+    comment = get_object_or_404(VideoComment, pk=comment_id)
+
+    # 작성자 본인만 수정 가능
+    if comment.user != request.user:
+        return JsonResponse({
+            'success': False,
+            'error': '본인의 댓글만 수정할 수 있습니다.',
+        }, status=403)
+
+    content = request.POST.get('content', '').strip()
+
+    # 유효성 검사
+    if not content:
+        return JsonResponse({
+            'success': False,
+            'error': '댓글 내용을 입력해주세요.',
+        }, status=400)
+
+    # 댓글 수정
+    comment.content = content
+    comment.save(update_fields=['content'])
+
+    return JsonResponse({
+        'success': True,
+        'comment': {
+            'id': comment.pk,
+            'content': comment.content,
+        },
+    })
+
+
+@require_POST
+@login_required
+def delete_comment(request, comment_id):
+    """댓글 삭제 (AJAX)"""
+
+    comment = get_object_or_404(VideoComment, pk=comment_id)
+
+    # 작성자 본인만 삭제 가능
+    if comment.user != request.user:
+        return JsonResponse({
+            'success': False,
+            'error': '본인의 댓글만 삭제할 수 있습니다.',
+        }, status=403)
+
+    # 댓글 삭제
+    comment.delete()
+
+    return JsonResponse({
+        'success': True,
     })
