@@ -5,7 +5,6 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count, F, ExpressionWrapper, IntegerField
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from datetime import datetime, timedelta
 import mimetypes
 
 from rest_framework.decorators import api_view
@@ -78,29 +77,17 @@ def video_detail(request, video_id):
 
     video = get_object_or_404(Video, pk=video_id)
 
-    # 조회수 증가 (세션 기반 + 24시간 제한)
-    session_key = f'video_viewed_{video_id}'
-    last_viewed = request.session.get(session_key)
+    # 조회수 증가 (계정 기반 + Django Cache + 24시간 제한)
+    from django.core.cache import cache
 
-    should_count = False
-    if not last_viewed:
-        # 처음 방문
-        should_count = True
-    else:
-        # 마지막 조회 시간 확인
-        try:
-            last_viewed_time = datetime.fromisoformat(last_viewed)
-            if datetime.now() - last_viewed_time > timedelta(hours=24):
-                # 24시간이 지났으면 다시 카운트
-                should_count = True
-        except (ValueError, TypeError):
-            # 세션 데이터가 잘못된 경우 다시 카운트
-            should_count = True
+    cache_key = f'video_viewed_{video_id}_{request.user.pk}'
 
-    if should_count:
+    if not cache.get(cache_key):
+        # 24시간 내 조회 기록이 없으면 조회수 증가
         video.video_views += 1
         video.save(update_fields=['video_views'])
-        request.session[session_key] = datetime.now().isoformat()
+        cache.set(cache_key, True, 60*60*24)  # 24시간 동안 캐시 저장
+        # cache.set(cache_key, True, 60)  # 테스트용 1분분
 
     # 현재 사용자의 좋아요 상태 확인
     is_liked = False
@@ -182,29 +169,17 @@ def increase_play_count(request, video_id):
 
     video = get_object_or_404(Video, pk=video_id)
 
-    # 재생수 증가 (세션 기반 + 24시간 제한)
-    session_key = f'video_played_{video_id}'
-    last_played = request.session.get(session_key)
+    # 재생수 증가 (계정 기반 + Django Cache + 24시간 제한)
+    from django.core.cache import cache
 
-    should_count = False
-    if not last_played:
-        # 처음 재생
-        should_count = True
-    else:
-        # 마지막 재생 시간 확인
-        try:
-            last_played_time = datetime.fromisoformat(last_played)
-            if datetime.now() - last_played_time > timedelta(hours=24):
-                # 24시간이 지났으면 다시 카운트
-                should_count = True
-        except (ValueError, TypeError):
-            # 세션 데이터가 잘못된 경우 다시 카운트
-            should_count = True
+    cache_key = f'video_played_{video_id}_{request.user.pk}'
 
-    if should_count:
+    if not cache.get(cache_key):
+        # 24시간 내 재생 기록이 없으면 재생수 증가
         video.video_play_count += 1
         video.save(update_fields=['video_play_count'])
-        request.session[session_key] = datetime.now().isoformat()
+        cache.set(cache_key, True, 60*60*24)  # 24시간 동안 캐시 저장
+        # cache.set(cache_key, True, 60)  # 테스트용 1분
 
     return JsonResponse({
         'success': True,
