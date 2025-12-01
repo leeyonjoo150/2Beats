@@ -173,6 +173,32 @@
         {% endfor %}
     </ul>
 
+{% if recommendations %}
+    <h3 style="color: #ff99cc; margin-top: 50px;">👥 이 곡을 뽑은 분들은 이런 곡도 좋아해요</h3>
+    <ul class="rank-list">
+        {% for music in recommendations %}
+        <li class="rank-item" style="border-color: #ff99cc;">
+            <div class="rank-num" style="font-size: 1.5rem;">👍</div>
+            
+            {% if music.music_thumbnail %}
+                <img class="mini-thumb" src="{{ music.music_thumbnail.url }}" alt="thumb">
+            {% else %}
+                <div class="mini-thumb" style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;">No Img</div>
+            {% endif %}
+
+            <div>
+                <div style="font-weight: bold;">{{ music.music_title }}</div>
+                <div style="font-size: 0.9rem; color: #aaa;">{{ music.music_singer }}</div>
+            </div>
+            
+            <div style="margin-left: auto; background: #333; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; color: #ccc;">
+                {{ music.get_music_type_display }}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
     <div class="btn-group">
         <button class="btn-retry" onclick="location.href='{% url 'twobeats_worldcup:play' %}'">🔄 다시 하기</button>
         <button class="btn-ranking" onclick="location.href='{% url 'twobeats_worldcup:ranking' %}'">🏆 랭킹 보기</button>

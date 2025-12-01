@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 
 from apps.twobeats_upload.models import Music
+from apps.twobeats_music_explore.models import MusicLike
 from .models import WorldCupGame, WorldCupResult
 from .serializers import CandidateSerializer, WorldCupSaveSerializer
 
@@ -223,9 +224,106 @@ def result_page(request, game_id):
     winner = results.first()
     others = results[1:]
     
+    # 현재 로그인한 유저라면 ID를 넘겨서 본인을 제외시킴
+    current_user_id = game.wc_user.pk if game.wc_user else None
+    
+    # 협업 필터링 추천
+    recommendations = get_collaborative_recommendations(winner.wc_music.id, current_user_id)
+    
+    # 만약 협업 필터링 결과가 없으면(데이터 부족), 장르 기반 추천으로 대체 (Fail-over)
+    if not recommendations.exists():
+        recommendations = Music.objects.filter(
+            music_type=winner.wc_music.music_type
+        ).exclude(id=winner.wc_music.id).order_by('?')[:5]
+
     context = {
         'game': game,
         'winner': winner,
         'others': others,
+        'recommendations': recommendations, # 템플릿으로 전달
     }
     return render(request, 'twobeats_worldcup/result.html', context)
+
+
+def recommend_by_tags(request, game_id):
+    '''월드컵 우승곡 기반 추천'''
+    # 이번 게임의 우승곡 가져오기
+    game = get_object_or_404(WorldCupGame, pk=game_id)
+    winner_result = game.results.filter(wc_final_rank=1).first()
+    winner_music = winner_result.wc_music
+
+    # 우승곡의 태그들
+    winner_tags = winner_music.tags.all()
+
+    # 같은 장르이면서 태그가 겹치는 곡 찾기 (우승곡 제외)
+    recommendations = Music.objects.filter(music_type=winner_music.music_type) \
+        .exclude(id=winner_music.id) \
+        .filter(tags__in=winner_tags) \
+        .annotate(common_tags=Count('tags')) \
+        .order_by('-common_tags', '-music_like_count')[:5]
+
+    return render(request, 'twobeats_worldcup/recommend.html', {'musics': recommendations})
+
+
+def get_collaborative_recommendations(winner_music_id, user_id=None):
+    """
+    협업 필터링 추천 알고리즘
+    :param winner_music_id: 현재 월드컵 우승곡 ID
+    :param user_id: 현재 플레이한 유저 ID (본인 제외용, 없으면 None)
+    :return: 추천된 Music QuerySet (최대 5개)
+    """
+    
+    # 1. [동질 집단 찾기] 
+    # 이 노래(winner_music_id)를 '우승(rank=1)'시킨 다른 게임의 유저 ID들을 찾음
+    # (익명 유저(None)는 추적이 불가능하므로 제외)
+    similar_users = WorldCupResult.objects.filter(
+        wc_music_id=winner_music_id,
+        wc_final_rank=1,
+        wc_game__wc_user__isnull=False  # 로그인 유저만
+    ).exclude(
+        wc_game__wc_user_id=user_id     # 나 자신은 제외
+    ).values_list('wc_game__wc_user', flat=True).distinct()
+
+    # 데이터가 너무 적으면 빈 결과 반환 (혹은 랜덤/장르 추천으로 대체)
+    if not similar_users:
+        return Music.objects.none()
+
+    # 2. [선호 곡 수집 & 랭킹]
+    # 나와 취향이 비슷한 유저들(similar_users)이 좋아하는 다른 곡 찾기
+    
+    # 방식 A: 그들이 '좋아요(MusicLike)'를 누른 곡들
+    # 방식 B: 그들이 '다른 월드컵에서 우승(WorldCupResult)'시킨 곡들
+    # -> 여기서는 두 가지를 합쳐서 카운트해 봅니다.
+    
+    # A. 좋아요 누른 곡 ID
+    liked_music_ids = MusicLike.objects.filter(
+        user__in=similar_users
+    ).values_list('music_id', flat=True)
+    
+    # B. 다른 월드컵 우승 곡 ID
+    won_music_ids = WorldCupResult.objects.filter(
+        wc_game__wc_user__in=similar_users,
+        wc_final_rank=1
+    ).values_list('wc_music_id', flat=True)
+
+    # 3. [집계 및 정렬]
+    # 위 ID들을 모아서 가장 많이 언급된 곡 찾기
+    # (현재 우승곡 자체는 추천에서 제외)
+    all_related_music_ids = list(liked_music_ids) + list(won_music_ids)
+    
+    # Music 모델에서 해당 ID들을 필터링하고, 등장 횟수(frequency)로 정렬
+    # 꼼수: id__in으로 필터링 후 annotate로 점수 매기기가 복잡하므로,
+    # 파이썬 레벨에서 Counter를 쓰거나, DB 쿼리를 최적화할 수 있습니다.
+    
+    # DB 쿼리 최적화 방식:
+    recommendations = Music.objects.filter(
+        id__in=all_related_music_ids
+    ).exclude(
+        id=winner_music_id  # 방금 우승한 곡은 추천 제외
+    ).annotate(
+        # 좋아요나 우승 기록에 이 곡이 몇 번 등장했는지 카운트
+        popularity=Count('musiclike', filter=Q(musiclike__user__in=similar_users)) + 
+                   Count('worldcupresult', filter=Q(worldcupresult__wc_game__wc_user__in=similar_users, worldcupresult__wc_final_rank=1))
+    ).order_by('-popularity')[:5]  # 상위 5개
+
+    return recommendations
