@@ -101,15 +101,7 @@ def chart_liked(request):
 def music_detail(request, music_id):
     """음악 상세 페이지"""
     music = get_object_or_404(Music, pk=music_id)
-    
-    # 세션으로 중복 조회 방지
-    viewed_key = f'viewed_music_{music_id}'
-    if not request.session.get(viewed_key):
-        Music.objects.filter(pk=music_id).update(
-            music_count=F('music_count') + 1
-        )
-        music.refresh_from_db()
-        request.session[viewed_key] = True
+
     
     comments = music.comments.all()
     
@@ -157,6 +149,7 @@ def music_like(request, music_id):
         })
     
     return redirect('music_explore:detail', music_id)
+
 @login_required
 def music_comment(request, music_id):
     """댓글 작성"""
@@ -192,8 +185,28 @@ def comment_delete(request, comment_id):
     
     return redirect('music_explore:detail', music_id=music_id)
 
+@login_required
+@require_POST
+def comment_edit(request, comment_id):
+    """댓글 수정"""
+    comment = get_object_or_404(MusicComment, pk=comment_id)
+    music_id = comment.music.id
+    
+    if comment.user == request.user:
+        content = request.POST.get('content', '').strip()
+        if content:
+            comment.content = content
+            comment.save()
+            messages.success(request, '댓글이 수정되었습니다.')
+        else:
+            messages.error(request, '댓글 내용을 입력해주세요.')
+    else:
+        messages.error(request, '본인의 댓글만 수정할 수 있습니다.')
+    
+    return redirect('music_explore:detail', music_id=music_id)
 
 def get_music_like_status(request, music_id):
+    
     """음악 좋아요 상태 확인 (AJAX)"""
     if not request.user.is_authenticated:
         return JsonResponse({'is_liked': False, 'like_count': 0})
@@ -233,3 +246,16 @@ def search_autocomplete(request):
         results.append({'type': 'singer', 'value': singer})
     
     return JsonResponse({'results': results[:8]})
+
+def increase_play_count(request, music_id):
+    """재생수 증가 API"""
+    # 세션으로 중복 방지
+    played_key = f'played_music_{music_id}'
+    if not request.session.get(played_key):
+        Music.objects.filter(pk=music_id).update(
+            music_count=F('music_count') + 1
+        )
+        request.session[played_key] = True
+        return JsonResponse({'success': True, 'message': '재생수 증가'})
+    
+    return JsonResponse({'success': False, 'message': '이미 카운트됨'})

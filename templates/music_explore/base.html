@@ -422,7 +422,7 @@
 
     <script>
         // ===== 유틸리티 함수 =====
-        
+
         // 키보드 단축키
         document.addEventListener('keydown', function(e) {
             // 입력 중이면 무시 (검색창, 댓글 등)
@@ -632,6 +632,12 @@
             player.classList.add('active');
             
             showToast(`🎵 ${title} - ${artist}`, 'info');
+            // 재생수 증가 API 호출
+            fetch('/music/play/' + musicId + '/')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('재생수:', data.message);
+                });
             
             {% if user.is_authenticated %}
             fetch('/music/like-status/' + musicId + '/')
