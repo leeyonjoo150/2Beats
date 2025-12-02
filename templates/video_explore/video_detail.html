@@ -377,9 +377,9 @@
         {% include 'video_explore/video_comments.html' %}
 
         <!-- 관련 영상 -->
-        {% if related_videos %}
         <div class="related-videos">
             <h3>관련 영상</h3>
+            {% if related_videos %}
             <div class="related-grid">
                 {% for related in related_videos %}
                 <a href="{% url 'video_explore:video_detail' related.pk %}" class="related-card">
@@ -395,8 +395,13 @@
                 </a>
                 {% endfor %}
             </div>
+            {% else %}
+            <div style="text-align: center; padding: 60px 20px; color: #999; background-color: #f8f8f8; border-radius: 8px;">
+                <p style="font-size: 16px; margin-bottom: 10px;">😔 추천할 영상이 없습니다.</p>
+                <p style="font-size: 14px;">다른 영상을 탐색해보세요!</p>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     <script>

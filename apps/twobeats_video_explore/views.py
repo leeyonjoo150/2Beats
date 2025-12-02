@@ -2,10 +2,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, F, ExpressionWrapper, IntegerField
+from django.core.cache import cache  # video_detail: 관련 영상 추천 캐싱
+from django.db.models import Q, Count, F, ExpressionWrapper, IntegerField, Case, When, FloatField  # video_detail: 하이브리드 추천 알고리즘
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone  # video_detail: 신규 영상 보너스 계산
+from datetime import timedelta  # video_detail: 최근 7일 필터링
 import mimetypes
+import logging  # video_detail: 추천 알고리즘 에러 로깅
+import random  # video_detail: 랜덤 추천 (다양성 확보)
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -50,12 +55,12 @@ def video_list(request, video_type=None):
             (F('video_views') * 5) + (F('video_play_count') * 4) + (F('like_count') * 3) + (F('comment_count') * 2),
             output_field=IntegerField()
         )
-    ).order_by('-popularity_score')[:3]
+    ).prefetch_related('tags').order_by('-popularity_score')[:3]
 
     # 일반 영상 리스트 (최신순, 좋아요 수 포함)
     videos = videos.annotate(
         like_count=Count('videolike', distinct=True)
-    ).order_by('-video_created_at')
+    ).prefetch_related('tags').order_by('-video_created_at')
 
     # 페이지네이션 (한 페이지당 16개)
     paginator = Paginator(videos, 16)
@@ -123,10 +128,139 @@ def video_detail(request, video_id):
     # 태그 목록
     tags = video.tags.all()
 
-    # 관련 영상 추천 (같은 아티스트 또는 같은 타입, 현재 영상 제외)
-    related_videos = Video.objects.filter(
-        Q(video_singer=video.video_singer) | Q(video_type=video.video_type)
-    ).exclude(pk=video_id).order_by('-video_views')[:6]
+    # ===================================================================
+    # 관련 영상 추천 알고리즘
+    # ===================================================================
+
+    # --- [방법 1] 기존 방식 (간단, 빠름) ---
+    # 같은 아티스트 또는 같은 장르, 조회수 높은 순
+    # related_videos = Video.objects.filter(
+    #     Q(video_singer=video.video_singer) | Q(video_type=video.video_type)
+    # ).exclude(pk=video_id).order_by('-video_views')[:6]
+
+    # --- [방법 2] 하이브리드 추천 (콘텐츠 + 협업 필터링 + 캐싱 + 랜덤성) ---
+    # 필요한 모듈들: cache, Case, When, FloatField, random, timezone, timedelta, logging
+    # (모두 파일 최상단에서 import됨)
+
+    logger = logging.getLogger(__name__)
+
+    # 1. 캐시 확인
+    cache_key = f'related_videos_{video_id}'
+    related_videos = cache.get(cache_key)
+
+    if not related_videos:
+        try:
+            # 2. 10% 확률로 다양성 추천 (인기 편향 방지)
+            if random.random() < 0.1:
+                # 무작위 추천 (최신 영상 우선)
+                related_videos = Video.objects.exclude(
+                    pk=video_id
+                ).order_by('-video_created_at')[:6]
+            else:
+                # 90% 확률로 하이브리드 추천
+                video_tags = video.tags.all()
+
+                # 후보 영상 필터링 (같은 아티스트, 장르, 태그)
+                candidate_videos = Video.objects.filter(
+                    Q(video_singer=video.video_singer) |
+                    Q(video_type=video.video_type) |
+                    Q(tags__in=video_tags)
+                ).exclude(pk=video_id).distinct()
+
+                # 현재 영상을 좋아요한 사용자들
+                users_who_liked = VideoLike.objects.filter(
+                    video=video
+                ).values_list('user', flat=True)
+
+                # 점수 계산
+                if users_who_liked.exists():
+                    # 좋아요 데이터 있을 때: 협업 필터링 포함
+                    related_videos = candidate_videos.annotate(
+                        # 콘텐츠 유사도 점수
+                        same_artist_score=Case(
+                            When(video_singer=video.video_singer, then=30),
+                            default=0,
+                            output_field=IntegerField()
+                        ),
+                        same_type_score=Case(
+                            When(video_type=video.video_type, then=20),
+                            default=0,
+                            output_field=IntegerField()
+                        ),
+                        common_tags_score=Count('tags', filter=Q(tags__in=video_tags)) * 10,
+                        # 협업 필터링 점수 (좋아요 기반)
+                        collab_score=Count('videolike', filter=Q(videolike__user__in=users_who_liked), distinct=True) * 15,
+                        # 인기도 점수 (조회수 정규화)
+                        popularity_score=ExpressionWrapper(
+                            F('video_views') / 100.0,
+                            output_field=FloatField()
+                        ),
+                        # 신규 영상 보너스 (최근 7일)
+                        recency_bonus=Case(
+                            When(
+                                video_created_at__gte=timezone.now() - timedelta(days=7),
+                                then=10
+                            ),
+                            default=0,
+                            output_field=IntegerField()
+                        ),
+                        # 최종 점수
+                        final_score=ExpressionWrapper(
+                            F('same_artist_score') + F('same_type_score') +
+                            F('common_tags_score') + F('collab_score') +
+                            F('popularity_score') + F('recency_bonus'),
+                            output_field=FloatField()
+                        )
+                    ).order_by('-final_score')[:6]
+                else:
+                    # 좋아요 데이터 없을 때: 콘텐츠 기반만
+                    related_videos = candidate_videos.annotate(
+                        same_artist_score=Case(
+                            When(video_singer=video.video_singer, then=30),
+                            default=0,
+                            output_field=IntegerField()
+                        ),
+                        same_type_score=Case(
+                            When(video_type=video.video_type, then=20),
+                            default=0,
+                            output_field=IntegerField()
+                        ),
+                        common_tags_score=Count('tags', filter=Q(tags__in=video_tags)) * 10,
+                        popularity_score=ExpressionWrapper(
+                            F('video_views') / 100.0,
+                            output_field=FloatField()
+                        ),
+                        recency_bonus=Case(
+                            When(
+                                video_created_at__gte=timezone.now() - timedelta(days=7),
+                                then=10
+                            ),
+                            default=0,
+                            output_field=IntegerField()
+                        ),
+                        final_score=ExpressionWrapper(
+                            F('same_artist_score') + F('same_type_score') +
+                            F('common_tags_score') + F('popularity_score') + F('recency_bonus'),
+                            output_field=FloatField()
+                        )
+                    ).order_by('-final_score')[:6]
+
+            # 3. 캐시에 저장 (1시간)
+            cache.set(cache_key, list(related_videos), 60*60)
+
+        except Exception as e:
+            # 에러 발생 시 기본 추천으로 폴백
+            logger.error(f'추천 알고리즘 에러 (video_id={video_id}): {str(e)}')
+
+            # 간단한 추천으로 대체 (같은 아티스트 또는 같은 장르, 조회수 높은 순)
+            related_videos = Video.objects.filter(
+                Q(video_singer=video.video_singer) | Q(video_type=video.video_type)
+            ).exclude(pk=video_id).order_by('-video_views')[:6]
+
+            # 폴백 추천도 캐시에 저장 (10분만)
+            cache.set(cache_key, list(related_videos), 60*10)
+
+    # ===================================================================
 
     # 재생 시간 포맷팅 (초 -> MM:SS)
     minutes = video.video_time // 60
