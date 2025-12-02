@@ -1,5 +1,3 @@
-from django.db import models
-
 # Create your models here.
 # twobeats_video_explore/models.py
 

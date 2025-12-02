@@ -453,9 +453,13 @@ def stream_video(request, video_id):
     # - Range 헤더 확인
     # - 206 Partial Content 응답
     # - Content-Range 헤더 설정
+
+    # FileField.open() 사용 - Django가 자동으로 파일 관리 (close() 포함)
+    video.video_root.open('rb')
+
     response = RangedFileResponse(
         request,
-        open(video.video_root.path, 'rb'),
+        video.video_root,  # FileField 객체 전달 (close() 메서드 있음)
         content_type=content_type
     )
 

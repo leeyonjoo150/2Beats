@@ -312,12 +312,15 @@
                         </div>
                         <span class="comment-date">${data.comment.created_at}</span>
                     </div>
-                    <div class="comment-content">${data.comment.content}</div>
+                    <div class="comment-content" id="comment-content-${data.comment.id}"></div>
                     <div class="comment-actions">
                         <button class="comment-btn edit-btn" onclick="editComment(${data.comment.id})">수정</button>
                         <button class="comment-btn delete-btn" onclick="deleteComment(${data.comment.id})">삭제</button>
                     </div>
                 `;
+
+                // XSS 방지: textContent 사용 (HTML 태그가 실행되지 않음)
+                document.getElementById(`comment-content-${data.comment.id}`).textContent = data.comment.content;
 
                 // 최상단에 추가
                 commentList.insertBefore(newComment, commentList.firstChild);
