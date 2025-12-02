@@ -328,7 +328,7 @@
 
                 {% if video.video_root %}
                     {% if user.is_authenticated %}
-                    <a href="{{ video.video_root.url }}" download class="action-btn" style="text-decoration: none; color: inherit;">
+                    <a href="{% url 'video_explore:download_video' video.pk %}" class="action-btn" style="text-decoration: none; color: inherit;">
                         📥 다운로드
                     </a>
                     {% else %}
