@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>월드컵 결과 - 2Beats</title>
+    <style>
+        /* --- [공통 스타일] --- */
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        /* 우승자 카드 (금색 테두리 효과) */
+        .winner-section {
+            margin-bottom: 50px;
+            animation: popUp 0.8s ease-out;
+        }
+        .winner-badge {
+            font-size: 1.5rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            font-weight: bold;
+        }
+        .winner-card {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 20px;
+            padding: 5px; /* 테두리 두께 */
+            background-image: linear-gradient(45deg, #ffd700, #ffaa00, #ffd700); /* 금색 그라데이션 */
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+            display: inline-block;
+        }
+        .winner-content {
+            background: #222;
+            border-radius: 18px;
+            padding: 20px;
+            width: 300px;
+        }
+        .winner-img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .winner-title { font-size: 1.5rem; margin: 10px 0; color: white; font-weight: bold; }
+        .winner-singer { color: #aaa; font-size: 1.1rem; margin: 0; }
+
+        /* 나머지 순위 리스트 */
+        h3 { color: #00ff88; margin-top: 40px; margin-bottom: 20px; text-align: left;}
+
+        .rank-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            text-align: left;
+        }
+        .rank-item {
+            background: #1e1e1e;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid #333;
+            transition: transform 0.2s;
+        }
+        .rank-item:hover { transform: translateX(5px); background: #2a2a2a; border-color: #555; }
+        
+        .rank-num {
+            font-size: 1.2rem;
+            font-weight: bold;
+            width: 50px;
+            text-align: center;
+        }
+        .rank-2 { color: #c0c0c0; } /* 은색 */
+        .rank-4 { color: #cd7f32; } /* 동색 */
+        
+        .mini-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            object-fit: cover;
+            background: #333;
+        }
+
+        /* 버튼 그룹 */
+        .btn-group {
+            margin-top: 40px;
+            margin-bottom: 60px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+        .btn-save { 
+            background-color: #3b82f6; /* 파란색 */
+            color: white; 
+            border: 1px solid #2563eb;
+        }
+        .btn-save:hover { background-color: #2563eb; }
+        .btn-retry { background-color: #00ff88; color: black; }
+        .btn-retry:hover { background-color: #00cc6a; }
+        .btn-ranking { background-color: #333; color: white; border: 1px solid #555; }
+        .btn-ranking:hover { background-color: #444; border-color: #777; }
+        .btn-share {
+            background-color: #ff007f; /* 핫핑크 (인스타 느낌) */
+            color: white;
+        }
+        .btn-share:hover { background-color: #e60073; }
+
+        @keyframes popUp {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"> /* sns 공유 라이브러리 */ </script> 
+</head>
+<body>
+
+<div id="share-card-area" style="position: absolute; top: -9999px; left: -9999px; width: 600px; height: 900px; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); padding: 40px; text-align: center; border-radius: 20px; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    
+    <div style="font-size: 2rem; color: #00ff88; font-weight: bold; margin-bottom: 30px; text-shadow: 0 0 10px rgba(0,255,136,0.5);">
+        🎵 2Beats World Cup
+    </div>
+
+    <div style="position: relative; width: 400px; height: 400px; margin-bottom: 30px;">
+        <div style="position: absolute; top: -20px; left: -20px; font-size: 4rem;">👑</div>
+        <img id="share-img" src="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px; border: 5px solid #ffd700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);">
+    </div>
+
+    <h2 id="share-title" style="font-size: 2.5rem; margin: 10px 0; word-break: keep-all;">Title</h2>
+    <p id="share-singer" style="font-size: 1.5rem; color: #aaa; margin: 0;">Singer</p>
+
+    <div style="margin-top: 50px; padding: 15px 30px; background: #333; border-radius: 50px; font-size: 1.2rem; color: #00ff88; border: 2px solid #00ff88;">
+        내 취향의 음악을 찾아보세요!
+    </div>
+</div>
+
+<div class="container">
+    
+    <div class="winner-section">
+        <div class="winner-badge">👑 최종 우승 (Winner)</div>
+        <div class="winner-card">
+            <div class="winner-content">
+                {% if winner.wc_music.music_thumbnail %}
+                    <img class="winner-img" src="{{ winner.wc_music.music_thumbnail.url }}" alt="winner">
+                {% else %}
+                    <div class="winner-img" style="background:#333;display:flex;align-items:center;justify-content:center;color:#666;">No Image</div>
+                {% endif %}
+                
+                <h2 class="winner-title">{{ winner.wc_music.music_title }}</h2>
+                <p class="winner-singer">{{ winner.wc_music.music_singer }}</p>
+            </div>
+        </div>
+    </div>
+
+    <h3>📜 플레이 히스토리</h3>
+    <ul class="rank-list">
+        {% for result in others %}
+        <li class="rank-item">
+            <div class="rank-num rank-{{ result.wc_final_rank }}">
+                {% if result.wc_final_rank == 2 %}🥈
+                {% elif result.wc_final_rank == 4 %}🥉
+                {% else %}{{ result.wc_final_rank }}강
+                {% endif %}
+            </div>
+            
+            {% if result.wc_music.music_thumbnail %}
+                <img class="mini-thumb" src="{{ result.wc_music.music_thumbnail.url }}" alt="thumb">
+            {% else %}
+                <div class="mini-thumb" style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;">No Img</div>
+            {% endif %}
+
+            <div>
+                <div style="font-weight: bold;">{{ result.wc_music.music_title }}</div>
+                <div style="font-size: 0.9rem; color: #aaa;">{{ result.wc_music.music_singer }}</div>
+            </div>
+        </li>
+        {% empty %}
+        <p style="color:#666; text-align:center; padding:20px;">다른 결과가 없습니다.</p>
+        {% endfor %}
+    </ul>
+
+{% if recommendations %}
+    <h3 style="color: #ff99cc; margin-top: 50px;">👥 이 곡을 뽑은 분들은 이런 곡도 좋아해요</h3>
+    <ul class="rank-list">
+        {% for music in recommendations %}
+        <li class="rank-item" style="border-color: #ff99cc;">
+            <div class="rank-num" style="font-size: 1.5rem;">👍</div>
+            
+            {% if music.music_thumbnail %}
+                <img class="mini-thumb" src="{{ music.music_thumbnail.url }}" alt="thumb">
+            {% else %}
+                <div class="mini-thumb" style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;">No Img</div>
+            {% endif %}
+
+            <div>
+                <div style="font-weight: bold;">{{ music.music_title }}</div>
+                <div style="font-size: 0.9rem; color: #aaa;">{{ music.music_singer }}</div>
+            </div>
+            
+            <div style="margin-left: auto; background: #333; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; color: #ccc;">
+                {{ music.get_music_type_display }}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="btn-group">
+        <button class="btn-retry" onclick="location.href='{% url 'twobeats_worldcup:play' %}'">🔄 다시 하기</button>
+
+        <button class="btn-share" onclick="downloadShareImage()">📸 이미지 저장</button>
+        
+        {% if user.is_authenticated %}
+            <button class="btn-save" onclick="saveToPlaylist()">💾 결과 저장</button>
+        {% else %}
+             <button class="btn-save" onclick="alert('로그인이 필요합니다!')" style="opacity: 0.6;">💾 결과 저장</button>
+        {% endif %}
+        
+        <button class="btn-ranking" onclick="location.href='{% url 'twobeats_worldcup:ranking' %}'">🏆 랭킹 보기</button>
+    </div>
+</div>
+
+<script>
+    // 플레이리스트 저장 요청 함수
+    async function saveToPlaylist() {
+        const gameId = "{{ game.pk }}"; // 현재 게임 ID
+        
+        if (!confirm("현재 4강 이상 진출한 곡들을\n내 플레이리스트로 저장하시겠습니까?")) {
+            return;
+        }
+
+        try {
+            // CSRF 토큰 가져오기 (Django 보안 필수)
+            const getCookie = (name) => {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+
+            const response = await fetch(`/worldcup/save_playlist/${gameId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message); // "저장되었습니다!"
+                // 필요하다면 마이페이지로 이동
+                // location.href = '/account/playlists/'; 
+            } else {
+                alert("저장 실패: " + (data.error || "알 수 없는 오류"));
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("서버 통신 중 오류가 발생했습니다.");
+        }
+    }
+    // [추가] SNS 공유 이미지 다운로드 함수
+    function downloadShareImage() {
+        // 1. 현재 우승자 정보를 캡처용 카드에 세팅
+        const originalImg = document.getElementById('winner-img-source'); // 아래 설명 참조 (ID 추가 필요)
+        const shareImg = document.getElementById('share-img');
+        const shareTitle = document.getElementById('share-title');
+        const shareSinger = document.getElementById('share-singer');
+
+        // result.html에서 우승자 정보 가져오기 (DOM id 확인 필요)
+        // 현재 result.html 코드를 보면 class로 되어 있거나 id가 없을 수 있음
+        // 따라서 확실하게 값을 가져오도록 수정해야 함.
+        
+        // 2. 값 복사
+        // 템플릿 변수를 JS 문자열로 바로 넣는 방식 사용
+        {% if winner.wc_music.music_thumbnail %}
+            shareImg.src = "{{ winner.wc_music.music_thumbnail.url }}";
+            shareImg.style.display = "block"; // 이미지 보이기
+        {% else %}
+            shareImg.src = ""; // 소스 비우기
+            shareImg.style.display = "none"; // 이미지가 없으면 숨기거나 기본 이미지로 대체
+            // 또는 shareImg.src = "/static/images/default.png"; 처럼 기본 이미지 설정
+        {% endif %}
+        shareTitle.innerText = "{{ winner.wc_music.music_title }}";
+        shareSinger.innerText = "{{ winner.wc_music.music_singer }}";
+
+        // 3. html2canvas로 캡처 시작
+        const captureArea = document.getElementById('share-card-area');
+        
+        // 잠깐 보이게 위치 이동 (화면 밖이지만 렌더링은 되게)
+        // html2canvas는 display:none 요소를 캡처 못함
+        captureArea.style.top = "0";
+        captureArea.style.zIndex = "-1"; // 유저 눈에는 안 보이게 뒤로
+
+        html2canvas(captureArea, {
+            useCORS: true, // 외부 이미지(S3 등) 사용 시 필수
+            scale: 2,      // 고해상도 (레티나 디스플레이 대응)
+            backgroundColor: null // 배경 투명 방지
+        }).then(canvas => {
+            // 4. 다운로드 트리거
+            const link = document.createElement('a');
+            link.download = '2Beats_Winner.png';
+            link.href = canvas.toDataURL("image/png");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 5. 다시 숨기기
+            captureArea.style.top = "-9999px";
+            alert("이미지가 저장되었습니다! SNS에 공유해보세요 📸");
+        }).catch(err => {
+            console.error(err);
+            alert("이미지 생성 실패 (브라우저 보안 설정 등을 확인하세요)");
+            captureArea.style.top = "-9999px";
+        });
+    }
+</script>
+
+</body>
+</html>

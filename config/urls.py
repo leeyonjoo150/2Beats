@@ -27,6 +27,7 @@ urlpatterns = [
     path('video/', include('apps.twobeats_video_explore.urls')),
     path('account/', include('apps.twobeats_account.urls')),
     path('music/', include('apps.twobeats_music_explore.urls')),
+    path('worldcup/', include('apps.twobeats_worldcup.urls')),
 ]
 
 if settings.DEBUG:
