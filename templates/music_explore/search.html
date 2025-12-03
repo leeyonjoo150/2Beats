@@ -1,0 +1,599 @@
+{% extends 'music_explore/base.html' %}
+
+{% block title %}음악 검색 - TwoBeats{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 페이지 헤더 */
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #222;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* 자동완성 */
+    .autocomplete-container {
+        position: relative;
+    }
+    
+    .autocomplete-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        display: none;
+        z-index: 100;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+    
+    .autocomplete-results.active {
+        display: block;
+    }
+    
+    .autocomplete-item {
+        padding: 0.9rem 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background-color 0.15s;
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    
+    .autocomplete-item:hover {
+        background-color: #f9f9f9;
+    }
+    
+    .autocomplete-item.selected {
+        background-color: #f0fdf4;
+    }
+    
+    .autocomplete-type {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .type-title {
+        background: linear-gradient(135deg, #1db954, #1ed760);
+    }
+    
+    .type-singer {
+        background: linear-gradient(135deg, #4a9eff, #3b8de8);
+    }
+    
+    /* 필터 영역 */
+    .filter-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-select {
+        flex: 1;
+        min-width: 150px;
+        padding: 0.8rem 1rem;
+        border: 2px solid #e8e8e8;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        background-color: #fafafa;
+        cursor: pointer;
+        transition: all 0.2s;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: #1db954;
+        background-color: #fff;
+    }
+    
+    /* 결과 헤더 */
+    .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.2rem;
+    }
+    
+    .result-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .result-count {
+        color: #888;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    /* 음악 카드 */
+    .music-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .music-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background-color: #fff;
+        border-radius: 12px;
+        gap: 1rem;
+        transition: all 0.2s ease;
+        border: 1px solid #f0f0f0;
+    }
+    
+    .music-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        border-color: #e0e0e0;
+    }
+    
+    .music-thumbnail {
+        width: 56px;
+        height: 56px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    
+    .music-thumbnail-placeholder {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+    
+    .music-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .music-title {
+        font-weight: 600;
+        color: #222;
+        text-decoration: none;
+        font-size: 0.95rem;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: color 0.2s;
+    }
+    
+    .music-title:hover {
+        color: #1db954;
+    }
+    
+    .music-artist {
+        color: #888;
+        font-size: 0.85rem;
+        margin-top: 0.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .music-play-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1db954, #1ed760);
+        border: none;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3);
+        flex-shrink: 0;
+    }
+    
+    .music-play-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+    }
+    
+    /* 페이지네이션 */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .pagination a,
+    .pagination span {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .pagination a {
+        background-color: #f5f5f5;
+        color: #555;
+        border: 1px solid #e8e8e8;
+    }
+    
+    .pagination a:hover {
+        background-color: #eee;
+        border-color: #ddd;
+    }
+    
+    .pagination .current {
+        background: linear-gradient(135deg, #1db954, #1ed760);
+        color: white;
+        border: none;
+    }
+    
+    /* 빈 상태 */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state-text {
+        font-size: 1rem;
+    }
+
+    .search-history {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    }
+
+    .history-item {
+        background-color: #f5f5f5;
+        border: 1px solid #e8e8e8;
+        border-radius: 20px;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.85rem;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .history-item:hover {
+        background-color: #e8e8e8;
+        color: #333;
+    }
+
+    .history-clear {
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-left: auto;
+    }
+
+    .history-clear:hover {
+        color: #ff6b6b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔍 음악 검색</h1>
+</div>
+
+<!-- 검색 폼 -->
+<div class="card">
+    <form method="GET" action="{% url 'music_explore:search' %}">
+        <div class="autocomplete-container">
+            <input 
+                type="text" 
+                name="q" 
+                class="search-box"
+                id="search-input"
+                placeholder="제목 또는 가수로 검색..."
+                value="{{ query }}"
+                autocomplete="off"
+            >
+            <div class="autocomplete-results" id="autocomplete-results"></div>
+        </div>
+        
+        <div class="filter-row">
+            <!-- 장르 필터 -->
+            <select name="genre" class="filter-select">
+                <option value="">전체 장르</option>
+                <option value="pop" {% if genre == 'pop' %}selected{% endif %}>Pop</option>
+                <option value="ballad" {% if genre == 'ballad' %}selected{% endif %}>Ballad</option>
+                <option value="hiphop" {% if genre == 'hiphop' %}selected{% endif %}>Hip-Hop</option>
+                <option value="rnb" {% if genre == 'rnb' %}selected{% endif %}>R&B</option>
+                <option value="rock" {% if genre == 'rock' %}selected{% endif %}>Rock</option>
+                <option value="dance" {% if genre == 'dance' %}selected{% endif %}>Dance</option>
+                <option value="indie" {% if genre == 'indie' %}selected{% endif %}>Indie</option>
+            </select>
+            
+            <!-- 태그 필터 -->
+            <select name="tag" class="filter-select">
+                <option value="">전체 태그</option>
+                {% for t in all_tags %}
+                    <option value="{{ t.name }}" {% if tag == t.name %}selected{% endif %}>#{{ t.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit" class="btn btn-primary">검색</button>
+        </div>
+    </form>
+    <div id="search-history" class="search-history" style="display: none;"></div>
+</div>
+
+<!-- 검색 결과 -->
+<div class="card">
+    <div class="result-header">
+        <h2>검색 결과</h2>
+        <span class="result-count">{{ musics.paginator.count }}곡</span>
+    </div>
+    
+    {% if musics %}
+        <div class="music-list">
+            {% for music in musics %}
+                <div class="music-card">
+                    <!-- 썸네일 -->
+                    {% if music.music_thumbnail %}
+                        <img src="{{ music.music_thumbnail.url }}" class="music-thumbnail" alt="{{ music.music_title }}">
+                    {% else %}
+                        <div class="music-thumbnail-placeholder">🎵</div>
+                    {% endif %}
+                    
+                    <!-- 정보 -->
+                    <div class="music-info">
+                        <a href="{% url 'music_explore:detail' music.id %}" class="music-title">
+                            {{ music.music_title }}
+                        </a>
+                        <p class="music-artist">{{ music.music_singer }}</p>
+                    </div>
+                    
+                    <!-- 재생 버튼 -->
+                    {% if music.music_root %}
+                    <button 
+                        class="music-play-btn"
+                        data-id="{{ music.id }}"
+                        data-title="{{ music.music_title }}"
+                        data-singer="{{ music.music_singer }}"
+                        data-url="{{ music.music_root.url }}"
+                        data-thumb="{% if music.music_thumbnail %}{{ music.music_thumbnail.url }}{% endif %}"
+                        onclick="playMusicFromData(this)"
+                    >
+                        ▶
+                    </button>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 페이지네이션 -->
+        {% if musics.has_other_pages %}
+        <div class="pagination">
+            {% if musics.has_previous %}
+                <a href="?q={{ query }}&genre={{ genre }}&tag={{ tag }}&page=1">처음</a>
+                <a href="?q={{ query }}&genre={{ genre }}&tag={{ tag }}&page={{ musics.previous_page_number }}">이전</a>
+            {% endif %}
+            
+            <span class="current">{{ musics.number }} / {{ musics.paginator.num_pages }}</span>
+            
+            {% if musics.has_next %}
+                <a href="?q={{ query }}&genre={{ genre }}&tag={{ tag }}&page={{ musics.next_page_number }}">다음</a>
+                <a href="?q={{ query }}&genre={{ genre }}&tag={{ tag }}&page={{ musics.paginator.num_pages }}">마지막</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🎵</div>
+            <p class="empty-state-text">검색 결과가 없습니다.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const searchInput = document.getElementById('search-input');
+const autocompleteResults = document.getElementById('autocomplete-results');
+let selectedIndex = -1;
+let debounceTimer;
+
+// 입력 시 자동완성
+searchInput.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    const query = this.value.trim();
+    
+    if (query.length < 1) {
+        autocompleteResults.classList.remove('active');
+        return;
+    }
+    
+    // 300ms 후에 검색
+    debounceTimer = setTimeout(() => {
+        fetch(`/music/autocomplete/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results.length > 0) {
+                    renderAutocomplete(data.results);
+                } else {
+                    autocompleteResults.classList.remove('active');
+                }
+            });
+    }, 300);
+});
+
+// 자동완성 렌더링
+function renderAutocomplete(results) {
+    selectedIndex = -1;
+    autocompleteResults.innerHTML = results.map((item, index) => `
+        <div class="autocomplete-item" data-value="${item.value}" data-index="${index}">
+            <span class="autocomplete-type ${item.type === 'title' ? 'type-title' : 'type-singer'}">
+                ${item.type === 'title' ? '제목' : '가수'}
+            </span>
+            <span>${item.value}</span>
+        </div>
+    `).join('');
+    
+    autocompleteResults.classList.add('active');
+    
+    // 클릭 이벤트
+    document.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('click', function() {
+            searchInput.value = this.dataset.value;
+            autocompleteResults.classList.remove('active');
+            searchInput.closest('form').submit();
+        });
+    });
+}
+
+// 키보드 네비게이션
+searchInput.addEventListener('keydown', function(e) {
+    const items = document.querySelectorAll('.autocomplete-item');
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        updateSelected(items);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+        updateSelected(items);
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        searchInput.value = items[selectedIndex].dataset.value;
+        autocompleteResults.classList.remove('active');
+        searchInput.closest('form').submit();
+    } else if (e.key === 'Escape') {
+        autocompleteResults.classList.remove('active');
+    }
+});
+
+function updateSelected(items) {
+    items.forEach((item, index) => {
+        if (index === selectedIndex) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+// 외부 클릭 시 닫기
+document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+        autocompleteResults.classList.remove('active');
+    }
+});
+
+const MAX_HISTORY = 5;
+
+function saveSearchHistory(query) {
+    if (!query.trim()) return;
+    
+    let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    
+    // 중복 제거
+    history = history.filter(item => item !== query);
+    
+    // 맨 앞에 추가
+    history.unshift(query);
+    
+    // 최대 5개만 유지
+    history = history.slice(0, MAX_HISTORY);
+    
+    localStorage.setItem('searchHistory', JSON.stringify(history));
+}
+
+function getSearchHistory() {
+    return JSON.parse(localStorage.getItem('searchHistory') || '[]');
+}
+
+function renderSearchHistory() {
+    const history = getSearchHistory();
+    const container = document.getElementById('search-history');
+    
+    if (history.length === 0 || !container) return;
+    
+    container.innerHTML = history.map(item => `
+        <button class="history-item" onclick="searchFromHistory('${item}')">
+            🕐 ${item}
+        </button>
+    `).join('');
+    
+    container.style.display = 'flex';
+}
+
+function searchFromHistory(query) {
+    document.getElementById('search-input').value = query;
+    document.getElementById('search-input').closest('form').submit();
+}
+
+function clearSearchHistory() {
+    localStorage.removeItem('searchHistory');
+    const container = document.getElementById('search-history');
+    if (container) {
+        container.style.display = 'none';
+    }
+    showToast('검색 기록 삭제됨', 'info');
+}
+
+// 페이지 로드 시
+document.addEventListener('DOMContentLoaded', function() {
+    renderSearchHistory();
+    
+    // 검색 시 기록 저장
+    const form = document.getElementById('search-input').closest('form');
+    form.addEventListener('submit', function() {
+        const query = document.getElementById('search-input').value;
+        saveSearchHistory(query);
+    });
+});
+</script>
+{% endblock %}

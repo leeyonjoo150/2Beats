@@ -1,0 +1,748 @@
+<!-- templates/music_explore/detail.html -->
+
+{% extends 'music_explore/base.html' %}
+
+{% block title %}{{ music.music_title }} - TwoBeats{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 음악 상세 헤더 */
+    .music-detail-header {
+        display: flex;
+        gap: 2.5rem;
+        align-items: flex-start;
+    }
+    
+    .music-cover {
+        flex-shrink: 0;
+    }
+    
+    .music-cover img {
+        width: 280px;
+        height: 280px;
+        border-radius: 16px;
+        object-fit: cover;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    
+    .music-cover-placeholder {
+        width: 280px;
+        height: 280px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 5rem;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    
+    .music-detail-info {
+        flex: 1;
+        padding-top: 0.5rem;
+    }
+    
+    .music-detail-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+    }
+    
+    .music-detail-artist {
+        font-size: 1.3rem;
+        color: #666;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+    }
+    
+    .music-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .music-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 0.95rem;
+        color: #555;
+    }
+    
+    .music-meta-label {
+        color: #999;
+        min-width: 70px;
+    }
+    
+    .music-meta-value {
+        font-weight: 500;
+    }
+    
+    /* 태그 */
+    .music-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.8rem;
+    }
+    
+    .music-tag {
+        display: inline-block;
+        background-color: #f0f7f0;
+        color: #1db954;
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .music-tag:hover {
+        background-color: #e0f2e0;
+    }
+    
+    /* 액션 버튼 */
+    .music-actions {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.7rem 1.4rem;
+        border-radius: 25px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .action-btn-play {
+        background: linear-gradient(135deg, #1db954, #1ed760);
+        color: white;
+        box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+    }
+    
+    .action-btn-play:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+    }
+    
+    .action-btn-like {
+        background-color: #fff;
+        color: #555;
+        border: 2px solid #e8e8e8;
+    }
+    
+    .action-btn-like:hover {
+        border-color: #ff6b6b;
+        color: #ff6b6b;
+    }
+    
+    .action-btn-like.liked {
+        background-color: #fff0f0;
+        border-color: #ff6b6b;
+        color: #ff6b6b;
+    }
+    
+    .action-btn-playlist {
+        background-color: #f5f5f5;
+        color: #555;
+        border: 2px solid transparent;
+    }
+    
+    .action-btn-playlist:hover {
+        background-color: #eee;
+    }
+    
+    /* 댓글 섹션 */
+    .comment-section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .comment-count {
+        background-color: #f0f0f0;
+        color: #666;
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    /* 댓글 작성 */
+    .comment-form {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .comment-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    
+    .comment-avatar-placeholder {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .comment-form-content {
+        flex: 1;
+    }
+    
+    .comment-input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 2px solid #e8e8e8;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        resize: none;
+        transition: all 0.2s;
+        font-family: inherit;
+        background-color: #fafafa;
+    }
+    
+    .comment-input:focus {
+        outline: none;
+        border-color: #1db954;
+        background-color: #fff;
+        box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
+    }
+    
+    .comment-submit-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.8rem;
+    }
+    
+    /* 댓글 목록 */
+    .comment-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .comment-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        background-color: #fafafa;
+        transition: background-color 0.2s;
+    }
+    
+    .comment-item:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .comment-body {
+        flex: 1;
+    }
+    
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .comment-author {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.95rem;
+    }
+    
+    .comment-date {
+        color: #999;
+        font-size: 0.8rem;
+    }
+    
+    .comment-text {
+        color: #555;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .comment-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .comment-action-btn {
+        background: none;
+        border: none;
+        font-size: 0.85rem;
+        cursor: pointer;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+    
+    .comment-action-btn.edit {
+        color: #1db954;
+    }
+    
+    .comment-action-btn.edit:hover {
+        background-color: #e8f5e9;
+    }
+    
+    .comment-action-btn.delete {
+        color: #ff6b6b;
+    }
+    
+    .comment-action-btn.delete:hover {
+        background-color: #ffebee;
+    }
+    
+    /* 댓글 수정 폼 */
+    .comment-edit-form {
+        margin-top: 0.8rem;
+    }
+    
+    .comment-edit-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .comment-edit-btn {
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .comment-edit-btn.save {
+        background: linear-gradient(135deg, #1db954, #1ed760);
+        color: white;
+        border: none;
+    }
+    
+    .comment-edit-btn.cancel {
+        background-color: #f5f5f5;
+        color: #666;
+        border: 1px solid #e0e0e0;
+    }
+    
+    /* 빈 댓글 */
+    .empty-comments {
+        text-align: center;
+        padding: 2.5rem;
+        color: #999;
+    }
+    
+    .empty-comments-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    /* 로그인 필요 */
+    .login-required {
+        text-align: center;
+        padding: 1.2rem;
+        background-color: #f9f9f9;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        color: #666;
+    }
+    
+    .login-required a {
+        color: #1db954;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .login-required a:hover {
+        text-decoration: underline;
+    }
+    
+    /* 메시지 */
+    .message {
+        padding: 1rem 1.2rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .message-success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+    
+    .message-error {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- 메시지 표시 -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="message {% if message.tags == 'success' %}message-success{% else %}message-error{% endif %}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- 음악 정보 -->
+<div class="card">
+    <div class="music-detail-header">
+        <!-- 커버 이미지 -->
+        <div class="music-cover">
+            {% if music.music_thumbnail %}
+                <img src="{{ music.music_thumbnail.url }}" alt="{{ music.music_title }}">
+            {% else %}
+                <div class="music-cover-placeholder">🎵</div>
+            {% endif %}
+        </div>
+        
+        <!-- 정보 -->
+        <div class="music-detail-info">
+            <h1 class="music-detail-title">{{ music.music_title }}</h1>
+            <p class="music-detail-artist">{{ music.music_singer }}</p>
+            
+            <div class="music-meta">
+                <div class="music-meta-item">
+                    <span class="music-meta-label">장르</span>
+                    <span class="music-meta-value">{{ music.get_music_type_display }}</span>
+                </div>
+                <div class="music-meta-item">
+                    <span class="music-meta-label">업로더</span>
+                    <span class="music-meta-value">{{ music.uploader.username }}</span>
+                </div>
+                <div class="music-meta-item">
+                    <span class="music-meta-label">재생수</span>
+                    <span class="music-meta-value">{{ music.music_count }}회</span>
+                </div>
+                <div class="music-meta-item">
+                    <span class="music-meta-label">좋아요</span>
+                    <span class="music-meta-value" id="like-count">{{ music.music_like_count }}</span>
+                </div>
+            </div>
+            
+            <!-- 태그 -->
+            {% if music.tags.all %}
+                <div class="music-tags">
+                    {% for tag in music.tags.all %}
+                        <span class="music-tag">#{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- 액션 버튼 -->
+            <div class="music-actions">
+                <!-- 재생 버튼 -->
+                {% if music.music_root %}
+                <button 
+                    class="action-btn action-btn-play"
+                    data-id="{{ music.id }}"
+                    data-title="{{ music.music_title }}"
+                    data-singer="{{ music.music_singer }}"
+                    data-url="{{ music.music_root.url }}"
+                    data-thumb="{% if music.music_thumbnail %}{{ music.music_thumbnail.url }}{% endif %}"
+                    onclick="playMusicFromData(this)"
+                >
+                    ▶️ 재생
+                </button>
+                {% endif %}
+                
+                <!-- 좋아요 버튼 -->
+                {% if user.is_authenticated %}
+                    <button 
+                        id="like-btn"
+                        onclick="toggleLike({{ music.id }})"
+                        class="action-btn action-btn-like {% if is_liked %}liked{% endif %}"
+                        data-liked="{% if is_liked %}true{% else %}false{% endif %}"
+                    >
+                        <span id="like-text">{% if is_liked %}❤️ 좋아요 취소{% else %}🤍 좋아요{% endif %}</span>
+                    </button>
+                {% else %}
+                    <a href="/admin/" class="action-btn action-btn-like">🤍 좋아요 (로그인 필요)</a>
+                {% endif %}
+                
+                <!-- 플레이리스트 버튼 -->
+                <button class="action-btn action-btn-playlist" onclick="addToPlaylistFromDetail()">
+                    📋 플레이리스트
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 댓글 -->
+<div class="card">
+    <h2 class="comment-section-title">
+        💬 댓글 
+        <span class="comment-count">{{ comments.count }}</span>
+    </h2>
+    
+    <!-- 댓글 작성 -->
+    {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'music_explore:comment' music.id %}" class="comment-form">
+            {% csrf_token %}
+            {% if user.profile_image %}
+                <img src="{{ user.profile_image.url }}" class="comment-avatar" alt="{{ user.username }}">
+            {% else %}
+                <div class="comment-avatar-placeholder">
+                    {{ user.username|slice:":1"|upper }}
+                </div>
+            {% endif %}
+            
+            <div class="comment-form-content">
+                <textarea 
+                    name="content" 
+                    rows="2" 
+                    class="comment-input"
+                    placeholder="댓글을 입력하세요..."
+                    required
+                ></textarea>
+                <div class="comment-submit-row">
+                    <button type="submit" class="btn btn-primary">댓글 작성</button>
+                </div>
+            </div>
+        </form>
+    {% else %}
+        <div class="login-required">
+            댓글을 작성하려면 <a href="/admin/">로그인</a>하세요.
+        </div>
+    {% endif %}
+    
+    <!-- 댓글 목록 -->
+    {% if comments %}
+        <div class="comment-list">
+            {% for comment in comments %}
+                <div class="comment-item">
+                    <!-- 프로필 이미지 -->
+                    {% if comment.user.profile_image %}
+                        <img src="{{ comment.user.profile_image.url }}" class="comment-avatar" alt="{{ comment.user.username }}">
+                    {% else %}
+                        <div class="comment-avatar-placeholder">
+                            {{ comment.user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="comment-body">
+                        <div class="comment-header">
+                            <span class="comment-author">{{ comment.user.username }}</span>
+                            <span class="comment-date" data-time="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        
+                        <!-- 댓글 내용 -->
+                        <div id="comment-content-{{ comment.id }}">
+                            <p class="comment-text">{{ comment.content }}</p>
+                            
+                            {% if user == comment.user %}
+                            <div class="comment-actions">
+                                <button class="comment-action-btn edit" onclick="showEditForm({{ comment.id }})">
+                                    ✏️ 수정
+                                </button>
+                                <form method="POST" action="{% url 'music_explore:comment_delete' comment.id %}" style="display: inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="comment-action-btn delete">
+                                        🗑️ 삭제
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 댓글 수정 폼 -->
+                        <div id="comment-edit-{{ comment.id }}" style="display: none;">
+                            <form method="POST" action="{% url 'music_explore:comment_edit' comment.id %}" class="comment-edit-form">
+                                {% csrf_token %}
+                                <textarea 
+                                    name="content" 
+                                    rows="2" 
+                                    class="comment-input"
+                                    required
+                                >{{ comment.content }}</textarea>
+                                <div class="comment-edit-buttons">
+                                    <button type="submit" class="comment-edit-btn save">저장</button>
+                                    <button type="button" class="comment-edit-btn cancel" onclick="hideEditForm({{ comment.id }})">취소</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-comments">
+            <div class="empty-comments-icon">💬</div>
+            <p>첫 댓글을 작성해보세요!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// CSRF 토큰
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 좋아요 토글
+function toggleLike(musicId) {
+    const likeBtn = document.getElementById('like-btn');
+    const likeText = document.getElementById('like-text');
+    const likeCount = document.getElementById('like-count');
+    
+    fetch(`/music/like/${musicId}/`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.is_liked) {
+            likeBtn.classList.add('liked');
+            likeText.textContent = '❤️ 좋아요 취소';
+            showToast('좋아요 추가!', 'success');
+        } else {
+            likeBtn.classList.remove('liked');
+            likeText.textContent = '🤍 좋아요';
+            showToast('좋아요 취소', 'info');
+        }
+        likeCount.textContent = data.like_count;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('오류가 발생했습니다.', 'error');
+    });
+}
+
+// 플레이리스트 추가
+function addToPlaylistFromDetail() {
+    {% if not user.is_authenticated %}
+    showToast('로그인이 필요합니다.', 'error');
+    return;
+    {% else %}
+    showToast('플레이리스트 기능 준비중입니다.', 'info');
+    {% endif %}
+}
+
+// 댓글 수정 폼 표시
+function showEditForm(commentId) {
+    document.getElementById('comment-content-' + commentId).style.display = 'none';
+    document.getElementById('comment-edit-' + commentId).style.display = 'block';
+}
+
+// 댓글 수정 폼 숨기기
+function hideEditForm(commentId) {
+    document.getElementById('comment-content-' + commentId).style.display = 'block';
+    document.getElementById('comment-edit-' + commentId).style.display = 'none';
+}
+
+// 좋아요 실시간 업데이트 (5초마다)
+setInterval(() => {
+    const musicId = {{ music.id }};
+    fetch(`/music/like-status/${musicId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // 좋아요 수 업데이트
+            document.getElementById('like-count').textContent = data.like_count;
+            
+            // 버튼 상태 업데이트 (로그인한 경우만)
+            {% if user.is_authenticated %}
+            const likeBtn = document.getElementById('like-btn');
+            const likeText = document.getElementById('like-text');
+            
+            if (likeBtn) {
+                if (data.is_liked) {
+                    likeBtn.classList.add('liked');
+                    likeText.textContent = '❤️ 좋아요 취소';
+                } else {
+                    likeBtn.classList.remove('liked');
+                    likeText.textContent = '🤍 좋아요';
+                }
+            }
+            {% endif %}
+        });
+}, 5000);
+// 시간 변환 함수
+function timeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 60) return '방금 전';
+    if (diff < 3600) return Math.floor(diff / 60) + '분 전';
+    if (diff < 86400) return Math.floor(diff / 3600) + '시간 전';
+    if (diff < 604800) return Math.floor(diff / 86400) + '일 전';
+    
+    // 일주일 넘으면 원래 날짜 표시
+    return dateString.split('T')[0];
+}
+
+// 페이지 로드 시 시간 변환
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.comment-date').forEach(el => {
+        const time = el.dataset.time;
+        if (time) {
+            el.textContent = timeAgo(time);
+        }
+    });
+});
+
+// 1분마다 업데이트
+setInterval(() => {
+    document.querySelectorAll('.comment-date').forEach(el => {
+        const time = el.dataset.time;
+        if (time) {
+            el.textContent = timeAgo(time);
+        }
+    });
+}, 60000);
+</script>
+{% endblock %}

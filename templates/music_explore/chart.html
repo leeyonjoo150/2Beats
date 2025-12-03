@@ -1,0 +1,265 @@
+<!-- templates/music_explore/chart.html -->
+
+{% extends 'music_explore/base.html' %}
+
+{% block title %}{{ chart_title }} - TwoBeats{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 페이지 헤더 */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #222;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .back-link {
+        color: #888;
+        text-decoration: none;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: color 0.2s;
+    }
+    
+    .back-link:hover {
+        color: #1db954;
+    }
+    
+    /* 음악 리스트 */
+    .chart-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    
+    .chart-item {
+        display: flex;
+        align-items: center;
+        padding: 0.9rem 1rem;
+        background-color: #fff;
+        border-radius: 12px;
+        gap: 1rem;
+        transition: all 0.2s ease;
+        border: 1px solid #f0f0f0;
+    }
+    
+    .chart-item:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border-color: #e8e8e8;
+    }
+    
+    /* 순위 */
+    .chart-rank {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #888;
+        flex-shrink: 0;
+    }
+    
+    .chart-rank.top3 {
+        background: linear-gradient(135deg, #1db954, #1ed760);
+        color: white;
+        border-radius: 50%;
+        font-size: 0.9rem;
+    }
+    
+    /* 썸네일 */
+    .chart-thumbnail {
+        width: 52px;
+        height: 52px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    
+    .chart-thumbnail-placeholder {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    
+    /* 음악 정보 */
+    .chart-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .chart-title {
+        font-weight: 600;
+        color: #222;
+        text-decoration: none;
+        font-size: 0.95rem;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: color 0.2s;
+    }
+    
+    .chart-title:hover {
+        color: #1db954;
+    }
+    
+    .chart-artist {
+        color: #888;
+        font-size: 0.85rem;
+        margin-top: 0.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* 통계 */
+    .chart-stats {
+        display: flex;
+        gap: 1.2rem;
+        color: #999;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    
+    .chart-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .chart-stat-icon {
+        font-size: 0.9rem;
+    }
+    
+    /* 재생 버튼 */
+    .chart-play-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1db954, #1ed760);
+        border: none;
+        color: white;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3);
+        flex-shrink: 0;
+        
+    }
+    
+    .chart-item:hover .chart-play-btn {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+    }
+    
+    .chart-play-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+    }
+    
+    /* 빈 상태 */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        {% if chart_type == 'popular' %}🔥{% elif chart_type == 'latest' %}✨{% else %}❤️{% endif %}
+        {{ chart_title }}
+    </h1>
+    <a href="{% url 'music_explore:chart_all' %}" class="back-link">
+        ← 전체 차트 보기
+    </a>
+</div>
+
+<div class="card">
+    {% if musics %}
+        <div class="chart-list">
+            {% for music in musics %}
+                <div class="chart-item">
+                    <div class="chart-rank {% if forloop.counter <= 3 %}top3{% endif %}">
+                        {{ forloop.counter }}
+                    </div>
+                    
+                    {% if music.music_thumbnail %}
+                        <img src="{{ music.music_thumbnail.url }}" class="chart-thumbnail" alt="{{ music.music_title }}">
+                    {% else %}
+                        <div class="chart-thumbnail-placeholder">🎵</div>
+                    {% endif %}
+                    
+                    <div class="chart-info">
+                        <a href="{% url 'music_explore:detail' music.id %}" class="chart-title">
+                            {{ music.music_title }}
+                        </a>
+                        <p class="chart-artist">{{ music.music_singer }}</p>
+                    </div>
+                    
+                    <div class="chart-stats">
+                        <span class="chart-stat">
+                            <span class="chart-stat-icon">▶️</span>
+                            {{ music.music_count }}
+                        </span>
+                        <span class="chart-stat">
+                            <span class="chart-stat-icon">❤️</span>
+                            {{ music.music_like_count }}
+                        </span>
+                    </div>
+                    
+                    {% if music.music_root %}
+                    <button 
+                        class="chart-play-btn"
+                        data-id="{{ music.id }}"
+                        data-title="{{ music.music_title }}"
+                        data-singer="{{ music.music_singer }}"
+                        data-url="{{ music.music_root.url }}"
+                        data-thumb="{% if music.music_thumbnail %}{{ music.music_thumbnail.url }}{% endif %}"
+                        onclick="playMusicFromData(this)"
+                    >
+                        ▶
+                    </button>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🎵</div>
+            <p>음악이 없습니다.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -20,15 +20,19 @@ from django.conf import settings
 from django.conf.urls.static import static
 from apps.twobeats_account import views as account_views
 
+# from django.views.generic import RedirectView
 urlpatterns = [
     path('', account_views.landing, name='landing'),
     path('admin/', admin.site.urls),
     path('video/', include('apps.twobeats_video_explore.urls')),
     path('account/', include('apps.twobeats_account.urls')),
+    path('music/', include('apps.twobeats_music_explore.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
+
+        
     )
