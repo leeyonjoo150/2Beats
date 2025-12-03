@@ -20,7 +20,7 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 60px 20px 20px 20px; /* 위쪽 공간 추가 */
         }
 
         /* 검색창 */
@@ -245,55 +245,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- 검색창 -->
-        <div class="search-box">
-            <form id="search-form" method="get" action="{% url 'video_explore:video_list' %}" style="display: flex; flex: 1; gap: 10px;">
-                <input id="search-input" type="text" name="q" placeholder="영상 제목이나 아티스트를 검색하세요..." autocomplete="off">
-                <input type="hidden" name="type" value="{{ video.video_type|default:'' }}">
-                <button type="submit">검색</button>
-            </form>
-            <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
-        </div>
-
-        <!-- 영상 타입 선택 -->
-        <div style="margin: 20px 0;">
-            <select id="video-type-select" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; cursor: pointer; background-color: white; min-width: 200px;">
-                <option value="">전체</option>
-                <option value="mv" {% if video.video_type == 'mv' %}selected{% endif %}>뮤직비디오</option>
-                <option value="performance" {% if video.video_type == 'performance' %}selected{% endif %}>퍼포먼스</option>
-                <option value="live" {% if video.video_type == 'live' %}selected{% endif %}>라이브</option>
-                <option value="cover" {% if video.video_type == 'cover' %}selected{% endif %}>커버</option>
-                <option value="dance" {% if video.video_type == 'dance' %}selected{% endif %}>댄스 영상</option>
-                <option value="documentary" {% if video.video_type == 'documentary' %}selected{% endif %}>다큐멘터리</option>
-                <option value="behind" {% if video.video_type == 'behind' %}selected{% endif %}>비하인드</option>
-                <option value="etc" {% if video.video_type == 'etc' %}selected{% endif %}>기타</option>
-            </select>
-        </div>
-
-        <script>
-            // 드롭다운 변경 시 페이지 이동 (검색어 유지)
-            document.getElementById('video-type-select').addEventListener('change', function() {
-                const selectedType = this.value;
-                const searchQuery = document.getElementById('search-input').value;
-
-                let url = '/video/';
-                const params = [];
-
-                if (selectedType) {
-                    params.push(`type=${selectedType}`);
-                }
-                if (searchQuery) {
-                    params.push(`q=${encodeURIComponent(searchQuery)}`);
-                }
-
-                if (params.length > 0) {
-                    url += '?' + params.join('&');
-                }
-
-                window.location.href = url;
-            });
-        </script>
-
         <!-- 영상 플레이어 -->
         <div class="video-player">
             {% if video.video_root %}
