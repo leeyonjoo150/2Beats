@@ -80,13 +80,6 @@
     .comment-author {
         font-weight: bold;
         color: #333;
-        text-decoration: none;
-        transition: color 0.3s;
-    }
-
-    .comment-author:hover {
-        color: #00CD3C;
-        text-decoration: underline;
     }
 
     .comment-date {
@@ -213,10 +206,9 @@
                     {% else %}
                     <div class="comment-author-image" style="display: flex; align-items: center; justify-content: center; font-size: 20px;">👤</div>
                     {% endif %}
-                    <!-- TODO: account 앱 완성 후 수정 -->
-                    <a href="#" onclick="alert('준비중입니다.'); return false;" class="comment-author">
+                    <span class="comment-author">
                         {{ comment.user.username }}
-                    </a>
+                    </span>
                 </div>
                 <span class="comment-date">{{ comment.created_at|date:"Y.m.d H:i" }}</span>
             </div>
@@ -301,14 +293,13 @@
                     ? `<img src="${data.comment.user_image}" alt="${data.comment.username}" class="comment-author-image">`
                     : `<div class="comment-author-image" style="display: flex; align-items: center; justify-content: center; font-size: 20px;">👤</div>`;
 
-                // TODO: account 앱 완성 후 수정
                 newComment.innerHTML = `
                     <div class="comment-header">
                         <div class="comment-author-info">
                             ${profileImageHTML}
-                            <a href="#" onclick="alert('준비중입니다.'); return false;" class="comment-author">
+                            <span class="comment-author">
                                 ${data.comment.username}
-                            </a>
+                            </span>
                         </div>
                         <span class="comment-date">${data.comment.created_at}</span>
                     </div>
@@ -319,11 +310,11 @@
                     </div>
                 `;
 
+                // 최상단에 추가 (먼저 DOM에 추가해야 getElementById가 작동함)
+                commentList.insertBefore(newComment, commentList.firstChild);
+
                 // XSS 방지: textContent 사용 (HTML 태그가 실행되지 않음)
                 document.getElementById(`comment-content-${data.comment.id}`).textContent = data.comment.content;
-
-                // 최상단에 추가
-                commentList.insertBefore(newComment, commentList.firstChild);
 
                 alert('댓글이 등록되었습니다.');
             } else {

@@ -23,8 +23,8 @@ from .models import VideoLike, VideoComment
 def video_list(request, video_type=None):
     """영상 리스트 (타입별 필터링, 인기 영상 TOP3, 페이지네이션)"""
 
-    # 기본 쿼리셋
-    videos = Video.objects.all()
+    # 기본 쿼리셋 (최적화: select_related로 N+1 쿼리 방지)
+    videos = Video.objects.select_related('video_user').prefetch_related('tags')
 
     # 타입별 필터링 (URL 파라미터 또는 GET 파라미터)
     if not video_type:
@@ -46,21 +46,23 @@ def video_list(request, video_type=None):
             Q(video_singer__icontains=search_query)
         )
 
-    # 인기 영상 TOP3 (점수 기반: 조회수*5 + 재생수*4 + 좋아요*3 + 댓글수*2)
-    top_videos = videos.annotate(
-        like_count=Count('videolike', distinct=True),
-        comment_count=Count('comments', distinct=True)
-    ).annotate(
-        popularity_score=ExpressionWrapper(
-            (F('video_views') * 5) + (F('video_play_count') * 4) + (F('like_count') * 3) + (F('comment_count') * 2),
-            output_field=IntegerField()
-        )
-    ).prefetch_related('tags').order_by('-popularity_score')[:3]
+    # 인기 영상 TOP3 (캐싱 + 간단한 점수 계산)
+    cache_key = f'top_videos_{video_type}_{selected_tag}_{search_query}'
+    top_videos = cache.get(cache_key)
 
-    # 일반 영상 리스트 (최신순, 좋아요 수 포함)
-    videos = videos.annotate(
-        like_count=Count('videolike', distinct=True)
-    ).prefetch_related('tags').order_by('-video_created_at')
+    if not top_videos:
+        # DB에 저장된 값만 사용 (조회수, 재생수, 좋아요수)
+        top_videos = list(videos.annotate(
+            popularity_score=ExpressionWrapper(
+                (F('video_views') * 3) + (F('video_play_count') * 2) + (F('video_like_count') * 4),
+                output_field=IntegerField()
+            )
+        ).order_by('-popularity_score')[:3])
+        # 5분간 캐싱
+        cache.set(cache_key, top_videos, 60 * 5)
+
+    # 일반 영상 리스트 (최신순, 좋아요 수는 video_like_count 필드 사용)
+    videos = videos.order_by('-video_created_at')
 
     # 페이지네이션 (한 페이지당 16개)
     paginator = Paginator(videos, 16)
@@ -114,8 +116,8 @@ def video_detail(request, video_id):
             video=video
         ).exists()
 
-    # 좋아요 수 계산
-    like_count = VideoLike.objects.filter(video=video).count()
+    # 좋아요 수 (video_like_count 필드 사용)
+    like_count = video.video_like_count
 
     # 댓글 목록 (최신순)
     comments = VideoComment.objects.filter(video=video).select_related('user').order_by('-created_at')
@@ -293,14 +295,23 @@ def toggle_like(request, video_id):
     if like_obj:
         # 이미 좋아요한 경우: 취소
         like_obj.delete()
+        # 좋아요 수 감소
+        Video.objects.filter(pk=video_id).update(
+            video_like_count=F('video_like_count') - 1
+        )
         liked = False
     else:
         # 좋아요하지 않은 경우: 추가
         VideoLike.objects.create(user=request.user, video=video)
+        # 좋아요 수 증가
+        Video.objects.filter(pk=video_id).update(
+            video_like_count=F('video_like_count') + 1
+        )
         liked = True
 
-    # 좋아요 수 재계산
-    like_count = VideoLike.objects.filter(video=video).count()
+    # 업데이트된 좋아요 수 가져오기
+    video.refresh_from_db()
+    like_count = video.video_like_count
 
     return JsonResponse({
         'success': True,

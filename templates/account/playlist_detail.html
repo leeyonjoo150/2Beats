@@ -101,12 +101,8 @@
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="{% url 'home' %}">2beats</a>
-    <div class="nav-actions">
-      <a href="{% url 'home' %}">홈으로</a>
-    </div>
-  </header>
+  {% include 'shared/navbar.html' %}
+
   <div class="container">
     <div class="top-links">
       <a class="link" href="{% url 'mylist' %}">← 마이리스트로</a>

@@ -169,6 +169,10 @@ class Video(models.Model):
         default=0,
         verbose_name='재생수'
     )
+    video_like_count = models.IntegerField(
+        default=0,
+        verbose_name='좋아요수'
+    )
     
     # 업로더
     video_user = models.ForeignKey(

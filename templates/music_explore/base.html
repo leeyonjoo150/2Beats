@@ -19,66 +19,7 @@
             padding-bottom: 100px;
             line-height: 1.6;
         }
-        
-        /* 네비게이션 */
-        nav {
-            background-color: #fff;
-            padding: 1rem 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 2.5rem;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        nav a {
-            color: #555;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
-            padding: 0.5rem 0;
-            position: relative;
-        }
-        
-        nav a:hover {
-            color: #1db954;
-        }
-        
-        nav a::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background-color: #1db954;
-            transition: width 0.3s;
-        }
-        
-        nav a:hover::after {
-            width: 100%;
-        }
-        
-        .logo {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #1db954 !important;
-            letter-spacing: -0.5px;
-        }
-        
-        .logo::after {
-            display: none;
-        }
-        
+
         .container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -458,28 +399,7 @@
     <!-- 토스트 컨테이너 -->
     <div class="toast-container" id="toast-container"></div>
 
-    <nav>
-        <ul>
-            <li><a href="{% url 'music_explore:search' %}" class="logo">🎵 TwoBeats</a></li>
-            <li><a href="{% url 'music_explore:search' %}">음악 검색</a></li>
-            <li><a href="{% url 'music_explore:chart_all' %}">음악 차트</a></li>
-            
-            <li style="margin-left: auto;">
-                {% if user.is_authenticated %}
-                    <div class="user-area">
-                        {% if user.profile_image %}
-                            <img src="{{ user.profile_image.url }}" class="user-avatar" style="object-fit: cover;">
-                        {% else %}
-                            <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
-                        {% endif %}
-                        <span>{{ user.username }}</span>
-                    </div>
-                {% else %}
-                    <a href="/admin/" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem;">로그인</a>
-                {% endif %}
-            </li>
-        </ul>
-    </nav>
+    {% include 'shared/navbar.html' %}
 
     <div class="container">
         {% block content %}{% endblock %}

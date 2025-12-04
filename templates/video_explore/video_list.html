@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>영상 - 2Beats</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -300,6 +301,8 @@
     </style>
 </head>
 <body>
+    {% include 'shared/navbar.html' %}
+
     <div class="container">
         <!-- 검색 및 필터 -->
         <form id="search-form" method="get" action="{% url 'video_explore:video_list' %}">
@@ -356,7 +359,7 @@
                     <div class="info">
                         <div class="title">{{ video.video_title }}</div>
                         <div class="singer">{{ video.video_singer }}</div>
-                        <div class="views">조회수 {{ video.video_views|default:0 }} | 좋아요 {{ video.like_count|default:0 }}</div>
+                        <div class="views">조회수 {{ video.video_views|default:0 }} | 좋아요 {{ video.video_like_count|default:0 }}</div>
                         {% if video.tags.all %}
                         <div class="tags">
                             {% for tag in video.tags.all|slice:":3" %}
@@ -391,7 +394,7 @@
                 <div class="info">
                     <div class="title">{{ video.video_title }}</div>
                     <div class="singer">{{ video.video_singer }}</div>
-                    <div class="views">조회수 {{ video.video_views|default:0 }} | 좋아요 {{ video.like_count|default:0 }}</div>
+                    <div class="views">조회수 {{ video.video_views|default:0 }} | 좋아요 {{ video.video_like_count|default:0 }}</div>
                     {% if video.tags.all %}
                     <div class="tags">
                         {% for tag in video.tags.all|slice:":3" %}
