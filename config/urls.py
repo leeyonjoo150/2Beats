@@ -28,6 +28,7 @@ urlpatterns = [
     path('account/', include('apps.twobeats_account.urls')),
     path('music/', include('apps.twobeats_music_explore.urls')),
     path('worldcup/', include('apps.twobeats_worldcup.urls')),
+    path('upload/', include('apps.twobeats_upload.urls', namespace='twobeats_upload')),
 ]
 
 if settings.DEBUG:
