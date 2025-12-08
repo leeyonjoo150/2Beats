@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.db.models import Count
+from django.db import IntegrityError
 
 from .forms import (
     MusicPlaylistCreateForm,
@@ -143,42 +144,27 @@ def history(request):
 
 @login_required(login_url='/account/login/')
 def playlist_detail(request, playlist_id):
-    kind = request.GET.get('kind')
-    if kind not in ('music', 'video'):
-        kind = 'music'
+    """
+    [수정] 플레이리스트 상세 - 음악 추가 기능 제거 (순서 변경만 유지)
+    """
+    kind = request.GET.get('kind', 'music') # 기본값 music
 
     if kind == 'music':
         playlist = get_object_or_404(MusicPlaylist, id=playlist_id, user=request.user)
         items = playlist.tracks.select_related('music').order_by('order')
-        add_form_class = PlaylistMusicAddForm
         is_music = True
     else:
         playlist = get_object_or_404(VideoPlaylist, id=playlist_id, user=request.user)
         items = playlist.clips.select_related('video').order_by('order')
-        add_form_class = PlaylistVideoAddForm
         is_music = False
 
     if request.method == 'POST':
-        action = request.POST.get('action', 'add')
-        if action == 'add':
-            form = add_form_class(request.POST)
-            if form.is_valid():
-                order = form.cleaned_data.get('order')
-                if order is None:
-                    order = items.count() + 1
-                if is_music:
-                    playlist.tracks.create(
-                        music=form.cleaned_data['music'],
-                        order=order,
-                    )
-                else:
-                    playlist.clips.create(
-                        video=form.cleaned_data['video'],
-                        order=order,
-                    )
-                messages.success(request, '플레이리스트에 추가했습니다.')
-                return redirect(f"{request.path}?kind={kind}")
-        elif action == 'reorder':
+        action = request.POST.get('action')
+        
+        # 'add' 액션 로직 삭제됨 (음악 상세페이지에서 추가하도록 유도)
+        
+        if action == 'reorder':
+            # 순서 변경 로직 유지
             updated = False
             items_list = list(items)
             for item in items_list:
@@ -198,8 +184,6 @@ def playlist_detail(request, playlist_id):
                     playlist.clips.model.objects.bulk_update(items_list, ['order'])
                 messages.success(request, '순서를 업데이트했습니다.')
             return redirect(f"{request.path}?kind={kind}")
-    else:
-        form = add_form_class()
 
     return render(
         request,
@@ -207,9 +191,9 @@ def playlist_detail(request, playlist_id):
         {
             'playlist': playlist,
             'items': items,
-            'form': form,
             'is_music': is_music,
             'kind': kind,
+            # 'form': form, # 폼 제거
         },
     )
 
@@ -217,32 +201,35 @@ def playlist_detail(request, playlist_id):
 @require_POST
 @login_required(login_url='/account/login/')
 def add_music_to_playlist(request):
+    """
+    [수정] 음악 상세 페이지에서 특정 플레이리스트에 곡 추가
+    """
     music_id = request.POST.get('music_id')
-    if not music_id:
-        return JsonResponse({'success': False, 'error': 'music_id is required'}, status=400)
+    playlist_id = request.POST.get('playlist_id') # 플레이리스트 ID 받기
 
+    if not music_id or not playlist_id:
+        return JsonResponse({'success': False, 'error': '잘못된 요청입니다.'}, status=400)
+
+    # 내 플레이리스트인지 확인
+    playlist = get_object_or_404(MusicPlaylist, id=playlist_id, user=request.user)
     music = get_object_or_404(Music, pk=music_id)
-    playlist, _ = MusicPlaylist.objects.get_or_create(
-        user=request.user,
-        folder_name='나의 플레이리스트',
-    )
-    track = PlaylistTrack.objects.filter(playlist=playlist, music=music).first()
-    if track:
-        track.delete()
-        return JsonResponse({
-            'success': True,
-            'playlist_id': playlist.id,
-            'removed': True,
-        })
-    else:
+
+    # 중복 체크
+    if PlaylistTrack.objects.filter(playlist=playlist, music=music).exists():
+        return JsonResponse({'success': False, 'error': '이미 이 플레이리스트에 담긴 곡입니다.'})
+
+    try:
+        # 마지막 순서 구하기
+        last_order = PlaylistTrack.objects.filter(playlist=playlist).count()
+        
         PlaylistTrack.objects.create(
             playlist=playlist,
             music=music,
-            order=playlist.tracks.count() + 1,
+            order=last_order + 1,
         )
-
-    return JsonResponse({
-        'success': True,
-        'playlist_id': playlist.id,
-        'removed': False,
-    })
+        return JsonResponse({
+            'success': True,
+            'message': f"'{playlist.folder_name}'에 추가되었습니다."
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

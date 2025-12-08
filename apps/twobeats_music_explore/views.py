@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.db.models import Q, F
 from django.core.paginator import Paginator
 from apps.twobeats_upload.models import Music, Tag
-from apps.twobeats_account.models import MusicHistory
+from apps.twobeats_account.models import MusicHistory, MusicPlaylist
 from .models import MusicLike,MusicComment
 
 
@@ -102,21 +102,28 @@ def chart_liked(request):
 def music_detail(request, music_id):
     """음악 상세 페이지"""
     music = get_object_or_404(Music, pk=music_id)
-
-    
     comments = music.comments.all()
     
     is_liked = False
+    # [추가] 빈 리스트로 초기화
+    user_playlists = [] 
+
     if request.user.is_authenticated:
         is_liked = MusicLike.objects.filter(
             user=request.user, 
             music=music
         ).exists()
+        
+        # [추가] 현재 로그인한 사용자의 음악 플레이리스트 목록 조회
+        user_playlists = MusicPlaylist.objects.filter(
+            user=request.user
+        ).order_by('-created_at')
     
     context = {
         'music': music,
         'comments': comments,
         'is_liked': is_liked,
+        'user_playlists': user_playlists, # [추가] 템플릿으로 전달
     }
     return render(request, 'music_explore/detail.html', context)
 

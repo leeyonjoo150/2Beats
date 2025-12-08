@@ -2,7 +2,7 @@
 {% block title %}플레이리스트 | 2beats{% endblock %}
 {% block content %}
   <div style="margin-bottom:10px;">
-    <a class="muted" href="{% url 'mylist' %}">← 마이 리스트로</a>
+    <a class="muted" href="{% url 'mylist' %}?tab={{ kind }}">← 마이 리스트로</a>
   </div>
 
   <div class="card" style="margin-bottom:14px;">
@@ -17,11 +17,12 @@
 
   <div class="card" style="margin-bottom:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
-      <h3 style="margin:0;">현재 목록</h3>
+      <h3 style="margin:0;">트랙 목록</h3>
       {% if items %}
-        <span class="muted">순서를 수정한 뒤 저장을 눌러주세요.</span>
+        <span class="muted">순서를 변경하려면 숫자를 수정하고 저장을 누르세요.</span>
       {% endif %}
     </div>
+
     {% if items %}
       <form method="post" action="">
         {% csrf_token %}
@@ -29,20 +30,23 @@
         <table>
           <thead>
             <tr>
-              <th>순서</th>
-              <th>{{ is_music|yesno:"음악,영상" }} 제목</th>
+              <th style="width: 80px;">순서</th>
+              <th>제목</th>
               <th>아티스트</th>
-            </tr>
+              <th style="width: 60px;"></th> </tr>
           </thead>
           <tbody>
             {% for item in items %}
               <tr>
-                <td><input type="number" name="order_{{ item.id }}" value="{{ item.order }}" min="1" style="width:80px; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#0c0a18; color:var(--text);"></td>
+                <td>
+                    <input type="number" name="order_{{ item.id }}" value="{{ item.order }}" min="1" 
+                           style="width:60px; padding:6px; border-radius:8px; border:1px solid var(--border); background:#0c0a18; color:var(--text); text-align:center;">
+                </td>
                 <td>
                   {% if is_music %}
-                    {{ item.music.music_title }}
+                    <a href="{% url 'music_explore:detail' item.music.id %}" style="font-weight:bold; color:var(--text);">{{ item.music.music_title }}</a>
                   {% else %}
-                    {{ item.video.video_title }}
+                    <a href="{% url 'video_explore:video_detail' item.video.id %}" style="font-weight:bold; color:var(--text);">{{ item.video.video_title }}</a>
                   {% endif %}
                 </td>
                 <td class="muted">
@@ -52,38 +56,29 @@
                     {{ item.video.video_singer }}
                   {% endif %}
                 </td>
+                <td>
+                    </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
-        <div style="margin-top:10px;">
+        <div style="margin-top:16px; text-align:right;">
           <button type="submit" class="btn btn-primary" style="border:none;">순서 저장</button>
         </div>
       </form>
     {% else %}
-      <p class="muted" style="margin:0;">아직 아이템이 없습니다. 아래에서 추가해 보세요.</p>
+      <div style="text-align:center; padding:40px 0; color:#999;">
+        <p style="font-size:2rem; margin-bottom:10px;">📭</p>
+        <p>플레이리스트가 비어있습니다.</p>
+        <p style="font-size:0.9rem;">
+            {% if is_music %}
+            <a href="{% url 'music_explore:search' %}" style="color:#1db954;">음악 검색</a>이나 차트에서 마음에 드는 곡을 추가해보세요.
+            {% else %}
+            <a href="{% url 'video_explore:video_list' %}" style="color:#1db954;">영상 목록</a>에서 영상을 추가해보세요.
+            {% endif %}
+        </p>
+      </div>
     {% endif %}
   </div>
 
-  <div class="card card-plain">
-    <h3 style="margin:0 0 10px;">아이템 추가</h3>
-    <form method="post" action="" style="display:grid; gap:10px;">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="add">
-      <div>
-        <label class="muted">{{ is_music|yesno:"음악,영상" }} 선택</label>
-        {% if is_music %}
-          {{ form.music }}
-        {% else %}
-          {{ form.video }}
-        {% endif %}
-      </div>
-      <div>
-        <label for="{{ form.order.id_for_label }}" class="muted">순서 (옵션)</label>
-        {{ form.order }}
-        <p class="muted" style="margin:6px 0 0; font-size:12px;">비워두면 마지막 순서에 추가됩니다.</p>
-      </div>
-      <button type="submit" class="btn btn-secondary" style="border:none; width:140px;">추가</button>
-    </form>
-  </div>
-{% endblock %}
+  {% endblock %}
