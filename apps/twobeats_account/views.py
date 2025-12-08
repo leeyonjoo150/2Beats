@@ -2,6 +2,8 @@ from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth import get_user_model
+from django.db.models import Count
 
 from .forms import (
     MusicPlaylistCreateForm,
@@ -17,6 +19,11 @@ from .models import (
     MusicPlaylist,
     VideoPlaylist,
 )
+
+# 통계 데이터를 위한 import
+from apps.twobeats_upload.models import Music, Video
+
+User = get_user_model()
 
 
 def signup(request):
@@ -52,7 +59,16 @@ def profile(request):
 def landing(request):
     if request.user.is_authenticated:
         return redirect('home')
-    return render(request, 'account/landing.html')
+
+    # 실제 데이터베이스 기반 통계
+    stats = {
+        'total_tracks': Music.objects.count(),
+        'total_videos': Video.objects.count(),
+        'total_users': User.objects.count(),
+        'total_playlists': MusicPlaylist.objects.count() + VideoPlaylist.objects.count(),
+    }
+
+    return render(request, 'account/landing.html', {'stats': stats})
 
 
 @login_required(login_url='/account/login/')
