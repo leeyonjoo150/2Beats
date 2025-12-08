@@ -16,6 +16,7 @@
             font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #fafafa;
             color: #333;
+            padding-top: 80px;
             padding-bottom: 100px;
             line-height: 1.6;
         }
@@ -23,7 +24,7 @@
         .container {
             max-width: 1200px;
             margin: 2rem auto;
-            padding: 0 2rem;
+            padding: 2rem 2rem 0 2rem;
         }
         
         /* 카드 */
@@ -401,6 +402,13 @@
                         radial-gradient(circle at 80% 0%, rgba(192,132,252,0.12), transparent 45%),
                         linear-gradient(160deg, #090712, #0e0a19 60%, #0a0814);
             color: var(--text);
+            padding-top: 80px !important;
+            padding-bottom: 100px !important;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding-top: 140px !important;
+            }
         }
         .card {
             background: linear-gradient(140deg, rgba(124,58,237,0.12), rgba(192,132,252,0.12), var(--card));
@@ -458,11 +466,9 @@
     <div class="loading-overlay" id="loading-overlay">
         <div class="spinner"></div>
     </div>
-    
+
     <!-- 토스트 컨테이너 -->
     <div class="toast-container" id="toast-container"></div>
-
-    {% include 'shared/navbar.html' %}
 
     <div class="container">
         {% block content %}{% endblock %}
@@ -546,6 +552,7 @@
         let currentIndex = -1;
         let isShuffled = false;
         let repeatMode = 0;
+        let previousVolume = 100;
         
         const audio = document.getElementById('global-audio');
         const player = document.getElementById('bottom-player');
@@ -999,11 +1006,14 @@
             }
         }
         function toggleMute() {
-            const slider = document.getElementById('volume-slider');    
+            const slider = document.getElementById('volume-slider');
             if (audio.volume > 0) {
+                // 현재 볼륨을 저장하고 음소거
+                previousVolume = slider.value;
                 slider.value = 0;
                 changeVolume(0);
             } else {
+                // 이전 볼륨으로 복원
                 slider.value = previousVolume;
                 changeVolume(previousVolume);
             }
