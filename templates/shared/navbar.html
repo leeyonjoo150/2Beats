@@ -1,3 +1,4 @@
+{% load static %}
 <!--
   ========================================
   공유 네비게이션 바 (Shared Navbar)
@@ -227,11 +228,11 @@
     }
 
     /* ========================================
-       하단 메뉴 영역 (음악 검색, 차트, 영상 등)
+       하단 메뉴 영역 (음악, 영상, 월드컵 등)
        ======================================== */
     .navbar-menu {
         display: flex;
-        gap: 2rem;  /* 메뉴 항목 간 간격 */
+        gap: 2.5rem;  /* 메뉴 항목 간 간격 */
         align-items: center;
         margin-top: 1rem;
         padding-top: 1rem;
@@ -249,6 +250,67 @@
 
     .navbar-menu a:hover {
         color: #c084fc;  /* 호버 시 보라색 */
+    }
+
+    /* ========================================
+       드롭다운 메뉴
+       ======================================== */
+    .navbar-menu-item {
+        position: relative;
+    }
+
+    .navbar-menu-item > a {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: rgba(18,15,31,0.98);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        min-width: 150px;
+        padding: 0.5rem 0;
+        margin-top: 0.5rem;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+        z-index: 1000;
+    }
+
+    .navbar-menu-item:hover .dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .dropdown-menu a {
+        display: block;
+        padding: 0.6rem 1rem;
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .dropdown-menu a:hover {
+        background: rgba(192,132,252,0.12);
+        color: #c084fc;
+    }
+
+    .dropdown-arrow {
+        font-size: 0.7rem;
+        transition: transform 0.2s;
+    }
+
+    .navbar-menu-item:hover .dropdown-arrow {
+        transform: rotate(180deg);
     }
 
     /* ========================================
@@ -307,7 +369,7 @@
         <div class="navbar-top">
             <!-- 로고: 로그인 여부에 따라 다른 페이지로 이동 -->
             <a href="{% if user.is_authenticated %}{% url 'home' %}{% else %}{% url 'landing' %}{% endif %}" class="navbar-logo">
-                <div class="logo-box">2B</div>
+                <img src="{% static 'logo.png' %}" alt="2BEATS Logo" style="height: 60px; width: auto; margin-right: 0.5rem;">
                 <span>2BEATS</span>
             </a>
 
@@ -372,8 +434,15 @@
 
         <!-- 하단 메뉴: 주요 페이지 링크 -->
         <div class="navbar-menu">
-            <a href="{% url 'music_explore:search' %}">음악 검색</a>
-            <a href="{% url 'music_explore:chart_all' %}">차트</a>
+            <!-- 음악 메뉴 (드롭다운) -->
+            <div class="navbar-menu-item">
+                <a href="{% url 'music_explore:search' %}">음악</a>
+                <div class="dropdown-menu">
+                    <a href="{% url 'music_explore:search' %}">검색</a>
+                    <a href="{% url 'music_explore:chart_all' %}">차트</a>
+                </div>
+            </div>
+
             <a href="{% url 'video_explore:video_list' %}">영상</a>
             <a href="{% url 'twobeats_worldcup:play' %}">월드컵</a>
 

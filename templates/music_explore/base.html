@@ -261,7 +261,23 @@
         .control-btn.active {
             color: #1db954;
         }
-        
+
+        .control-btn.shuffle-off {
+            position: relative;
+            opacity: 0.5;
+        }
+
+        .control-btn.shuffle-off::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 2px;
+            background: currentColor;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+
         .play-btn {
             font-size: 2.2rem;
             color: #1db954;
@@ -647,9 +663,13 @@
             }
             
             // 셔플/반복 상태 복원
+            const shuffleBtn = document.getElementById('shuffle-btn');
             if (localStorage.getItem('isShuffled') === 'true') {
                 isShuffled = true;
-                document.getElementById('shuffle-btn').classList.add('active');
+                shuffleBtn.classList.add('active');
+                shuffleBtn.classList.remove('shuffle-off');
+            } else {
+                shuffleBtn.classList.add('shuffle-off');
             }
             
             const savedRepeatMode = localStorage.getItem('repeatMode');
@@ -820,13 +840,15 @@
         function toggleShuffle() {
             isShuffled = !isShuffled;
             localStorage.setItem('isShuffled', isShuffled);
-            
+
             const shuffleBtn = document.getElementById('shuffle-btn');
             if (isShuffled) {
                 shuffleBtn.classList.add('active');
+                shuffleBtn.classList.remove('shuffle-off');
                 showToast('셔플 켜짐', 'success');
             } else {
                 shuffleBtn.classList.remove('active');
+                shuffleBtn.classList.add('shuffle-off');
                 showToast('셔플 꺼짐', 'info');
             }
         }
