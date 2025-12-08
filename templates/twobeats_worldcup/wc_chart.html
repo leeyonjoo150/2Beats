@@ -1,170 +1,65 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ chart_title }} - 2Beats</title>
-    <style>
-        /* --- [스타일 정의] --- */
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            background-color: #121212;
-            color: white;
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+{% extends "base.html" %}
+{% block title %}{{ chart_title }} | 2Beats{% endblock %}
+{% block extra_head %}
+<style>
+  .chart-shell { max-width: 1000px; margin: 0 auto; }
+  .chart-header { margin-bottom: 18px; }
+  .chart-header h1 {
+    margin: 0 0 6px;
+    background: linear-gradient(135deg, #e5d9ff 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    font-family: "Space Grotesk", "Pretendard", "Noto Sans KR", sans-serif;
+  }
+  .chart-header p { margin: 0; color: var(--muted); }
+  .chart-table { width: 100%; border-collapse: collapse; }
+  .chart-table th, .chart-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    color: var(--text);
+  }
+  .chart-table th { color: var(--muted); font-weight: 600; }
+  .chart-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+</style>
+{% endblock %}
 
-        .container {
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        h1 {
-            color: #00ff88;
-            margin-bottom: 10px;
-            font-size: 2rem;
-            text-align: center;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #888;
-            margin-bottom: 40px;
-        }
-
-        /* 차트 리스트 스타일 */
-        .chart-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            width: 100%;
-        }
-
-        .chart-item {
-            display: flex;
-            align-items: center;
-            background-color: #1e1e1e;
-            margin-bottom: 15px;
-            padding: 15px 20px;
-            border-radius: 12px;
-            transition: transform 0.2s, background-color 0.2s;
-            border: 1px solid #333;
-        }
-
-        .chart-item:hover {
-            transform: translateX(5px);
-            background-color: #2a2a2a;
-            border-color: #555;
-        }
-
-        /* 순위 스타일 */
-        .rank {
-            font-size: 1.5rem;
-            font-weight: bold;
-            width: 60px;
-            text-align: center;
-            margin-right: 20px;
-            font-style: italic;
-            color: #666;
-        }
-        
-        /* 1~3위 강조 */
-        .rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-        .rank-2 { color: #c0c0c0; }
-        .rank-3 { color: #cd7f32; }
-
-        /* 썸네일 */
-        .thumb {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-            object-fit: cover;
-            margin-right: 20px;
-            background-color: #333;
-        }
-
-        /* 곡 정보 */
-        .info {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 4px;
-            color: white;
-            text-decoration: none;
-        }
-        
-        .title:hover { text-decoration: underline; }
-
-        .singer {
-            font-size: 0.9rem;
-            color: #aaa;
-        }
-
-        /* 점수 뱃지 */
-        .score-badge {
-            background-color: #333;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            color: #00ff88;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        /* 반응형 (모바일) */
-        @media (max-width: 600px) {
-            .chart-item { padding: 10px; }
-            .rank { width: 40px; font-size: 1.2rem; margin-right: 10px; }
-            .thumb { width: 50px; height: 50px; margin-right: 15px; }
-            .title { font-size: 1rem; }
-        }
-    </style>
-</head>
-<body>
-{% include 'shared/navbar.html' %}
-
-<div class="container">
+{% block content %}
+<div class="chart-shell">
+  <div class="card chart-header">
     <h1>{{ chart_title }}</h1>
-    <p class="subtitle">사용자들의 월드컵 선택을 가장 많이 받은 인기곡입니다.</p>
+    <p>{{ chart_desc|default:"월드컵 플레이 데이터를 차트로 확인하세요." }}</p>
+    <div class="chart-actions">
+      <a class="btn btn-secondary" href="{% url 'twobeats_worldcup:ranking' %}">랭킹으로</a>
+      <a class="btn btn-primary" href="{% url 'twobeats_worldcup:play' %}">플레이하기</a>
+    </div>
+  </div>
 
-    <ul class="chart-list">
-        {% for music in musics %}
-        <li class="chart-item">
-            <div class="rank rank-{{ forloop.counter }}">
-                {{ forloop.counter }}
-            </div>
-
-            {% if music.music_thumbnail %}
-                <img src="{{ music.music_thumbnail.url }}" alt="cover" class="thumb">
-            {% else %}
-                <div class="thumb" style="display:flex;align-items:center;justify-content:center;color:#555;">No Img</div>
-            {% endif %}
-
-            <div class="info">
-                <a href="#" class="title">{{ music.music_title }}</a>
-                <span class="singer">{{ music.music_singer }}</span>
-            </div>
-
-            <div class="score-badge">
-                🔥 {{ music.total_score }}점
-            </div>
-        </li>
+  <div class="card">
+    <table class="chart-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>제목</th>
+          <th>아티스트</th>
+          <th>승률</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in chart_data %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ item.music.music_title }}</td>
+          <td class="muted">{{ item.music.music_singer }}</td>
+          <td class="muted">{{ item.win_rate }}%</td>
+        </tr>
         {% empty %}
-        <li style="text-align:center; padding: 40px; color: #666;">
-            아직 랭킹 데이터가 없습니다. 월드컵을 플레이해보세요!
-        </li>
+        <tr><td colspan="4" class="muted">차트 데이터가 없습니다.</td></tr>
         {% endfor %}
-    </ul>
-
+      </tbody>
+    </table>
+  </div>
 </div>
-
-</body>
-</html>
+{% endblock %}

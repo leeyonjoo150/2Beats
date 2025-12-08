@@ -1,24 +1,19 @@
-<!--
-  ========================================
-  ?�드�?게임 ?�이지 (World Cup Game)
-  ========================================
-  - ?�악 ?�상???�드�?게임
-  - 2개의 카드 �??�택?�여 ?�너먼트 진행
-  - 카드 ?�릭 ??미리?�기 ?�생
-  - 최종 ?�승�??�정 �??�??
--->
-
-{% extends "base.html" %}
-{% block title %}?�만???�드�?| 2Beats{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}나만의 월드컵 | 2Beats{% endblock %}
 
 {% block extra_head %}
 <style>
-  /* ========================================
-     ?�역 ?�정
-     ======================================== */
-  body { user-select: none; }
-
-  /* ?�크 ??보정 */
+  .wc-shell { max-width: 1100px; margin: 0 auto; }
+  .wc-header h1 {
+    margin: 0 0 8px;
+    background: linear-gradient(135deg, #e5d9ff 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: "Space Grotesk", "Pretendard", "Noto Sans KR", sans-serif;
+    letter-spacing: -0.02em;
+  }
+  .wc-header p { margin: 0; color: var(--muted); }
   .wc-card {
     background: linear-gradient(140deg, rgba(124,58,237,0.12), rgba(192,132,252,0.08), var(--card));
     border: 1px solid rgba(255,255,255,0.06);
@@ -55,151 +50,27 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 10px 12px;
+    width: 100%;
   }
   input:focus, select:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(124,58,237,0.2);
   }
-
-  /* ========================================
-     컨테?�너
-     ======================================== */
-  .wc-container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    text-align: center;
-    padding: 20px;
-  }
-
-  /* ?�이지 ?�목 */
-  .wc-container h1 {
-    margin-bottom: 10px;
-    background: linear-gradient(135deg, #ffffff 0%, #c084fc 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 2.5rem;
-    font-weight: 700;
-  }
-
-  /* ?�태 �?(?�운???�보) */
-  .status-bar {
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-    color: rgba(255,255,255,0.7);
-  }
-
-  /* ========================================
-     ?�정 ?�면
-     ======================================== */
-  #setup-screen {
-    display: block;
-    margin-top: 100px;
-  }
-
-  /* 커스?� ?�드�??�목 */
-  .custom-title {
-    font-size: 2rem;
-    color: #c084fc;
-    margin-bottom: 10px;
-    font-weight: 700;
-  }
-
-  .custom-creator {
-    color: rgba(255,255,255,0.6);
-    margin-bottom: 30px;
-  }
-
-  /* ?�정 ?�택 */
-  #setup-screen > div {
-    margin: 15px 0;
-  }
-
-  #setup-screen label {
-    color: rgba(255,255,255,0.8);
-    margin-right: 10px;
-    font-weight: 500;
-  }
-
-  select {
-    padding: 10px 20px;
-    font-size: 1rem;
-    margin: 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.05);
-    color: white;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  select:focus {
-    outline: none;
-    border-color: #c084fc;
-    background: rgba(255,255,255,0.08);
-  }
-
-  select option {
-    background: #120f1f;
-    color: white;
-  }
-
-  /* ?�작 버튼 */
-  .btn-start {
-    padding: 15px 40px;
-    font-size: 1.1rem;
-    margin: 20px 10px;
-    border-radius: 2rem;
-    border: none;
-    background: linear-gradient(120deg, #c084fc, #7c3aed);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 8px 24px rgba(124,58,237,0.35);
-  }
-
-  .btn-start:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(124,58,237,0.5);
-  }
-
-  /* ========================================
-     게임 ?�면
-     ======================================== */
-  #game-screen {
-    display: none;
-    width: 100%;
-  }
-
-  /* ?��?컨테?�너 - 2�?카드 + VS */
   .versus-container {
     display: flex;
     justify-content: center;
     align-items: flex-start;
     gap: 40px;
     margin-top: 30px;
+    flex-wrap: wrap;
   }
-
-  /* ?�보 ?�퍼 (카드 + ?�택 버튼) */
-  .candidate-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-  }
-
-  /* ========================================
-     카드 ?��???- 글?�스모피�?
-     ======================================== */
-  .card {
+  .candidate-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .card-visual {
     width: 320px;
     height: 420px;
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 15px;
     overflow: hidden;
@@ -207,30 +78,17 @@
     transition: all 0.3s;
     position: relative;
   }
-
-  /* 카드 ?�버 ?�과 */
-  .card:hover {
+  .card-visual:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 40px rgba(192,132,252,0.3);
     border-color: rgba(192,132,252,0.4);
   }
-
-  /* ?�생 중인 카드 */
-  .card.playing-card {
+  .card-visual.playing {
     border-color: #c084fc;
     box-shadow: 0 0 30px rgba(192,132,252,0.6);
     transform: scale(1.02);
   }
-
-  /* ?�범 ?��?지 */
-  .card img {
-    width: 100%;
-    height: 75%;
-    object-fit: cover;
-    pointer-events: none;
-  }
-
-  /* 카드 ?�보 ?�역 */
+  .card-visual img { width: 100%; height: 75%; object-fit: cover; }
   .card-info {
     padding: 15px;
     background: linear-gradient(to top, rgba(18,15,31,0.9), rgba(255,255,255,0.05));
@@ -239,485 +97,275 @@
     flex-direction: column;
     justify-content: center;
   }
-
-  .card-info h3 {
-    margin: 0;
-    font-size: 1.3rem;
-    margin-bottom: 5px;
-    color: white;
-  }
-
-  .card-info p {
-    color: rgba(255,255,255,0.6);
-    margin: 0;
-    font-size: 0.9rem;
-  }
-
-  /* ?�생 ?�이�?*/
+  .card-info h3 { margin: 0 0 5px; color: var(--text); }
+  .card-info p { margin: 0; color: var(--muted); font-size: 0.95rem; }
   .play-icon {
     position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 3rem;
-    color: rgba(255,255,255,0.9);
+    top: 40%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 3rem; color: rgba(255,255,255,0.9);
     text-shadow: 0 0 20px rgba(192,132,252,0.8);
-    opacity: 0;
-    transition: 0.3s;
+    opacity: 0; transition: 0.3s;
   }
-
-  .card:hover .play-icon {
-    opacity: 1;
-  }
-
-  .playing-card .play-icon {
-    opacity: 0;  /* ?�생 중일 ?�는 ?�이�??��? */
-  }
-
-  /* ========================================
-     ?�택 버튼
-     ======================================== */
-  .btn-select {
-    padding: 15px 40px;
-    font-size: 1.1rem;
-    background: rgba(255,255,255,0.05);
-    color: white;
-    border: 2px solid rgba(192,132,252,0.3);
-    border-radius: 30px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: bold;
-  }
-
-  .btn-select:hover {
-    background: linear-gradient(120deg, #c084fc, #7c3aed);
-    color: white;
-    border-color: #c084fc;
-    box-shadow: 0 0 20px rgba(192,132,252,0.5);
-    transform: scale(1.05);
-  }
-
-  /* VS ?�스??*/
-  .vs-text {
-    font-size: 3rem;
-    font-weight: bold;
-    font-style: italic;
-    background: linear-gradient(135deg, #ff3366, #ff6699);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-top: 180px;
-    text-shadow: 0 0 30px rgba(255,51,102,0.5);
-  }
-
-  /* ?�디???��? */
-  audio {
-    display: none;
-  }
-
-  /* ========================================
-     결과 ?�면
-     ======================================== */
-  #result-screen {
-    display: none;
-    margin-top: 50px;
-  }
-
-  #result-screen h2 {
-    font-size: 2.5rem;
-    margin-bottom: 30px;
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* ?�승 카드 */
-  .winner-card {
-    margin: 0 auto 30px;
-    transform: scale(1.2);
-    border: 4px solid gold;
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.7);
-    width: 300px;
-    border-radius: 15px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
-    padding: 10px;
-    animation: winner-glow 2s ease-in-out infinite;
-  }
-
-  @keyframes winner-glow {
-    0%, 100% {
-      box-shadow: 0 0 40px rgba(255, 215, 0, 0.7);
-    }
-    50% {
-      box-shadow: 0 0 60px rgba(255, 215, 0, 1);
-    }
-  }
-
-  .winner-card img {
-    width: 100%;
-    border-radius: 10px;
-  }
-
-  .winner-card > div {
-    padding: 15px;
-  }
-
-  .winner-card h3 {
-    margin: 0;
-    color: white;
-  }
-
-  .winner-card p {
-    color: rgba(255,255,255,0.7);
-    margin: 5px 0 0;
-  }
-
-  /* ========================================
-     모바??반응??
-     ======================================== */
-  @media (max-width: 768px) {
-    .versus-container {
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .vs-text {
-      margin-top: 0;
-      transform: rotate(90deg);
-    }
-
-    .card {
-      width: 280px;
-      height: 380px;
-    }
-
-    #setup-screen {
-      margin-top: 50px;
-    }
-  }
+  .card-visual:hover .play-icon { opacity: 1; }
+  .playing .play-icon { opacity: 0; }
+  .status-bar { font-size: 1.1rem; margin-bottom: 10px; color: var(--muted); text-align:center; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="wc-container">
-    <h1>������ 2Beats World Cup</h1>
-
-  <!-- ========================================
-       ?�정 ?�면
-       ======================================== -->
-  <div id="setup-screen" class="wc-card">
-      <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: center;">  
-            <button class="btn-select" style="padding: 10px 20px; font-size: 0.9rem; background-color: #555;" 
-                    onclick="location.href='{% url 'twobeats_worldcup:create_page' %}'">
-                ?���??�만???�드�?만들�?
-            </button>
-            
-            <button class="btn-select" style="padding: 10px 20px; font-size: 0.9rem; background-color: #555;" 
-                    onclick="location.href='{% url 'twobeats_worldcup:ranking' %}'">
-                ?�� ?�체 ??�� 보기
-            </button>
-        </div>
-    {% if is_custom %}
-      <!-- 커스?� ?�드�?-->
-      <div class="custom-title">{{ custom_wc.title }}</div>
-      <div class="custom-creator">Created by {{ custom_wc.creator.username }}</div>
-
-      <p style="color: rgba(255,255,255,0.7);">�?{{ custom_wc.musics.count }}곡이 준비되???�습?�다.</p>
-      <button class="btn-start" onclick="startCustomGame('{{ custom_wc.access_code }}', {{ custom_wc.musics.count }})">
-        ?�� ?�전?�기
-      </button>
-    {% else %}
-      <!-- ?�반 ?�드�?-->
-      <h2 style="color: rgba(255,255,255,0.9); margin-bottom: 30px;">게임 ?�정</h2>
-      <div>
-        <label>?�르: </label>
-        <select id="genre-select">
-          <option value="all">?�체 ?�르</option>
-          <option value="ballad">발라??/option>
-          <option value="dance">?�스</option>
-          <option value="hiphop">?�합</option>
-          <option value="rnb">R&B</option>
-          <option value="indie">?�디</option>
-          <option value="ost">OST</option>
-        </select>
-      </div>
-      <div>
-        <label>모드: </label>
-        <select id="mode-select">
-          <option value="random">?�덤 매칭</option>
-          <option value="rank">??�� 매칭 (?�기�?</option>
-        </select>
-      </div>
-      <div>
-        <label>?�운?? </label>
-        <select id="round-select">
-          <option value="32">32�?/option>
-          <option value="16">16�?/option>
-          <option value="8">8�?/option>
-          <option value="4">4�?/option>
-        </select>
-      </div>
-      <br>
-      <button class="btn-start" onclick="startGame()">게임 ?�작!</button>
-    {% endif %}
-    
+<div class="wc-shell">
+  <div class="card wc-header">
+    <h1>나만의 2Beats World Cup</h1>
+    <p>장르와 라운드를 선택해 음악 월드컵을 플레이하거나, 커스텀 월드컵을 시작하세요.</p>
   </div>
 
-  <!-- ========================================
-       게임 ?�면
-       ======================================== -->
-  <div id="game-screen" class="wc-card">
-    <div class="status-bar" id="round-info">16�?- 1 / 8</div>
+  <div id="setup-screen" class="wc-card">
+    <div style="margin: 0 0 14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+      <a class="wc-btn secondary" href="{% url 'twobeats_worldcup:create_page' %}">만들기 페이지로</a>
+      <a class="wc-btn secondary" href="{% url 'twobeats_worldcup:ranking' %}">랭킹 보기</a>
+    </div>
 
+    {% if is_custom %}
+      <div style="margin-bottom:12px;">
+        <div style="font-size:1.4rem; font-weight:700; color:var(--text);">{{ custom_wc.title }}</div>
+        <div class="muted">Created by {{ custom_wc.creator.username }} · {{ custom_wc.musics.count }}곡</div>
+      </div>
+      <button class="wc-btn" onclick="startCustomGame('{{ custom_wc.access_code }}', {{ custom_wc.musics.count }})">커스텀 게임 시작</button>
+    {% else %}
+      <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div>
+          <label class="muted">장르</label>
+          <select id="genre-select">
+            <option value="all">전체 장르</option>
+            <option value="ballad">발라드</option>
+            <option value="dance">댄스</option>
+            <option value="hiphop">힙합</option>
+            <option value="rnb">R&B</option>
+            <option value="indie">인디</option>
+            <option value="ost">OST</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted">모드</label>
+          <select id="mode-select">
+            <option value="random">랜덤 매칭</option>
+            <option value="rank">순위 매칭 (듣기수)</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted">라운드</label>
+          <select id="round-select">
+            <option value="32">32강</option>
+            <option value="16">16강</option>
+            <option value="8">8강</option>
+            <option value="4">4강</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:16px; text-align:center;">
+        <button class="wc-btn" onclick="startGame()">게임 시작</button>
+      </div>
+    {% endif %}
+  </div>
+
+  <div id="game-screen" class="wc-card" style="display:none;">
+    <div class="status-bar" id="round-info">16강 - 1 / 8</div>
     <div class="versus-container">
-      <!-- ?�쪽 ?�보 -->
       <div class="candidate-wrapper">
-        <div class="card" id="card-left" onclick="toggleAudio('left')">
-          <div class="play-icon">??/div>
-          <img id="img-left" src="" alt="cover">
+        <div class="card-visual" id="card-left" onclick="toggleAudio('left')">
+          <div class="play-icon">▶</div>
+          <img id="img-left" src="" alt="left cover">
           <div class="card-info">
             <h3 id="title-left">Title</h3>
             <p id="singer-left">Singer</p>
           </div>
         </div>
-        <button class="btn-select" onclick="selectMusic('left')">?�� ??�??�택</button>
+        <button class="wc-btn secondary" onclick="selectMusic('left')">왼쪽 선택</button>
         <audio id="audio-left"></audio>
       </div>
 
-      <!-- VS -->
-      <div class="vs-text">VS</div>
+      <div class="candidate-wrapper" style="min-width:90px; align-items:center;">
+        <div class="vs-text" style="font-size:3rem; font-weight:800; color:var(--accent);">VS</div>
+      </div>
 
-      <!-- ?�른�??�보 -->
       <div class="candidate-wrapper">
-        <div class="card" id="card-right" onclick="toggleAudio('right')">
-          <div class="play-icon">??/div>
-          <img id="img-right" src="" alt="cover">
+        <div class="card-visual" id="card-right" onclick="toggleAudio('right')">
+          <div class="play-icon">▶</div>
+          <img id="img-right" src="" alt="right cover">
           <div class="card-info">
             <h3 id="title-right">Title</h3>
             <p id="singer-right">Singer</p>
           </div>
         </div>
-        <button class="btn-select" onclick="selectMusic('right')">?�� ??�??�택</button>
+        <button class="wc-btn secondary" onclick="selectMusic('right')">오른쪽 선택</button>
         <audio id="audio-right"></audio>
       </div>
     </div>
-    <p style="margin-top: 20px; color: rgba(255,255,255,0.4); font-size: 0.9rem;">???�범 커버�??�릭?�면 미리?�기가 ?�생?�니??</p>
-  </div>
-
-  <!-- ========================================
-       결과 ?�면
-       ======================================== -->
-  <div id="result-screen" class="wc-card">
-    <h2>?�� 최종 ?�승! ?��</h2>
-    <div class="winner-card">
-      <img id="img-winner" src="" alt="cover">
-      <div>
-        <h3 id="title-winner"></h3>
-        <p id="singer-winner"></p>
-      </div>
-    </div>
-    <button class="btn-start" onclick="location.reload()">?�시 ?�기</button>
+    <p class="muted" style="text-align:center; margin-top:14px; font-size:0.9rem;">썸네일을 클릭하면 미리 듣기가 재생됩니다.</p>
   </div>
 </div>
 
-<!-- ========================================
-     JavaScript - 게임 로직
-     ======================================== -->
 <script>
-    let candidates = [];
-    let nextRound = [];
-    let currentPairIndex = 0;
-    let currentRoundName = 16;
-    let gameHistory = [];
-    let currentCustomCode = null;
+  let candidates = [];
+  let nextRound = [];
+  let currentPairIndex = 0;
+  let currentRoundName = 16;
+  let initialRound = 16;
+  let gameHistory = [];
+  let currentCustomCode = null;
 
-    // ?�반 게임 ?�작
-    async function startGame() {
-        const genre = document.getElementById('genre-select').value;
-        const sort = document.getElementById('mode-select').value;
-        const count = parseInt(document.getElementById('round-select').value);
-        currentCustomCode = null;
+  async function startGame() {
+    const genre = document.getElementById('genre-select').value;
+    const sort = document.getElementById('mode-select').value;
+    const count = parseInt(document.getElementById('round-select').value);
+    currentCustomCode = null;
+    initialRound = count;
+    await fetchAndStart(`/worldcup/candidates/?genre=${genre}&sort=${sort}&count=${count}`, count);
+  }
 
-        await fetchAndStart(`/worldcup/candidates/?genre=${genre}&sort=${sort}&count=${count}`, count);
+  async function startCustomGame(code, realCount) {
+    currentCustomCode = code;
+    initialRound = realCount;
+    await fetchAndStart(`/worldcup/candidates/?custom_code=${code}&count=${realCount}`, realCount);
+  }
+
+  async function fetchAndStart(url, explicitCount) {
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || "오류가 발생했습니다");
+        return;
+      }
+      candidates = data.candidates;
+      currentRoundName = explicitCount || candidates.length;
+      nextRound = [];
+      currentPairIndex = 0;
+      gameHistory = [];
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+      updateDisplay();
+    } catch (error) {
+      console.error(error);
+      alert("서버 통신 오류");
+    }
+  }
+
+  function updateDisplay() {
+    stopAllAudio();
+    const left = candidates[currentPairIndex];
+    const right = candidates[currentPairIndex + 1];
+
+    if (!right) {
+      nextRound.push(left);
+      gameHistory.push({ music_id: left.id, rank: currentRoundName });
+      endRound();
+      return;
     }
 
-    // 커스?� 게임 ?�작
-    async function startCustomGame(code, realCount) {
-        currentCustomCode = code;
-        await fetchAndStart(`/worldcup/candidates/?custom_code=${code}&count=${realCount}`, realCount);
+    const defaultImg = "https://via.placeholder.com/300x300?text=No+Image";
+
+    document.getElementById('img-left').src = left.thumbnail_url || defaultImg;
+    document.getElementById('title-left').textContent = left.music_title;
+    document.getElementById('singer-left').textContent = left.music_singer;
+    document.getElementById('audio-left').src = left.file_url || "";
+
+    document.getElementById('img-right').src = right.thumbnail_url || defaultImg;
+    document.getElementById('title-right').textContent = right.music_title;
+    document.getElementById('singer-right').textContent = right.music_singer;
+    document.getElementById('audio-right').src = right.file_url || "";
+
+    const totalMatches = Math.floor(candidates.length / 2);
+    const currentMatch = (currentPairIndex / 2) + 1;
+    let roundText = `${candidates.length}강`;
+    if (candidates.length <= 2) roundText = "결승";
+    else if (candidates.length <= 4) roundText = "4강";
+    else if (candidates.length <= 8) roundText = "8강";
+    else if (candidates.length <= 16) roundText = "16강";
+
+    document.getElementById('round-info').textContent = `${roundText} - ${currentMatch} / ${totalMatches}`;
+  }
+
+  function toggleAudio(side) {
+    const targetAudio = document.getElementById(`audio-${side}`);
+    const otherAudio = document.getElementById(`audio-${side === 'left' ? 'right' : 'left'}`);
+    const targetCard = document.getElementById(`card-${side}`);
+    const otherCard = document.getElementById(`card-${side === 'left' ? 'right' : 'left'}`);
+
+    if (targetAudio.paused) {
+      otherAudio.pause();
+      otherAudio.currentTime = 0;
+      otherCard.classList.remove('playing');
+      targetAudio.play().catch(() => {});
+      targetCard.classList.add('playing');
+    } else {
+      targetAudio.pause();
+      targetCard.classList.remove('playing');
     }
+  }
 
-    // ?�이??가?��???게임 ?�작
-    async function fetchAndStart(url, explicitCount) {
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
+  function stopAllAudio() {
+    document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
+    document.querySelectorAll('.card-visual').forEach(c => c.classList.remove('playing'));
+  }
 
-            if (!response.ok) {
-                alert(data.error || "?�류 발생");
-                return;
-            }
+  function selectMusic(side) {
+    stopAllAudio();
+    const left = candidates[currentPairIndex];
+    const right = candidates[currentPairIndex + 1];
+    let winner, loser;
+    if (side === 'left') { winner = left; loser = right; }
+    else { winner = right; loser = left; }
 
-            candidates = data.candidates;
-            currentRoundName = explicitCount || candidates.length;
-            nextRound = [];
-            currentPairIndex = 0;
-            gameHistory = [];
+    nextRound.push(winner);
+    const rank = (candidates.length <= 2) ? 2 : candidates.length;
+    gameHistory.push({ music_id: loser.id, rank: rank });
 
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'block';
-
-            updateDisplay();
-
-        } catch (error) {
-            console.error(error);
-            alert("?�버 ?�결 ?�패");
-        }
+    currentPairIndex += 2;
+    if (currentPairIndex >= candidates.length) {
+      endRound();
+    } else {
+      updateDisplay();
     }
+  }
 
-    // ?�면 ?�데?�트
-    function updateDisplay() {
-        stopAllAudio();
-
-        const left = candidates[currentPairIndex];
-        const right = candidates[currentPairIndex + 1];
-
-        if (!right) {
-            nextRound.push(left);
-            gameHistory.push({ music_id: left.id, rank: currentRoundName });
-            endRound();
-            return;
-        }
-
-        const defaultImg = "https://via.placeholder.com/300x300?text=No+Image";
-
-        document.getElementById('img-left').src = left.thumbnail_url || defaultImg;
-        document.getElementById('title-left').textContent = left.music_title;
-        document.getElementById('singer-left').textContent = left.music_singer;
-        document.getElementById('audio-left').src = left.file_url || "";
-
-        document.getElementById('img-right').src = right.thumbnail_url || defaultImg;
-        document.getElementById('title-right').textContent = right.music_title;
-        document.getElementById('singer-right').textContent = right.music_singer;
-        document.getElementById('audio-right').src = right.file_url || "";
-
-        const totalMatches = Math.floor(candidates.length / 2);
-        const currentMatch = (currentPairIndex / 2) + 1;
-
-        let roundText = `${candidates.length}�?;
-        if (candidates.length <= 2) roundText = "결승??;
-        else if (candidates.length <= 4) roundText = "4�?;
-        else if (candidates.length <= 8) roundText = "8�?;
-        else if (candidates.length <= 16) roundText = "16�?;
-
-        document.getElementById('round-info').textContent = `${roundText} - ${currentMatch} / ${totalMatches}`;
+  function endRound() {
+    if (candidates.length <= 2) {
+      const finalWinner = nextRound[0];
+      gameHistory.push({ music_id: finalWinner.id, rank: 1 });
+      sendResultToServer(finalWinner);
+    } else {
+      candidates = nextRound;
+      nextRound = [];
+      currentPairIndex = 0;
+      updateDisplay();
     }
+  }
 
-    // ?�디???��?
-    function toggleAudio(side) {
-        const targetAudio = document.getElementById(`audio-${side}`);
-        const otherAudio = document.getElementById(`audio-${side === 'left' ? 'right' : 'left'}`);
-        const targetCard = document.getElementById(`card-${side}`);
-        const otherCard = document.getElementById(`card-${side === 'left' ? 'right' : 'left'}`);
-
-        if (targetAudio.paused) {
-            otherAudio.pause();
-            otherAudio.currentTime = 0;
-            otherCard.classList.remove('playing-card');
-
-            targetAudio.play().catch(e => console.log("?�생 ?�패:", e));
-            targetCard.classList.add('playing-card');
-        } else {
-            targetAudio.pause();
-            targetCard.classList.remove('playing-card');
-        }
+  async function sendResultToServer(winner) {
+    try {
+      const user_uid = "{% if user.is_authenticated %}{{ user.pk }}{% else %}{% endif %}";
+      const final_uid = user_uid ? user_uid : null;
+      const response = await fetch('/worldcup/save/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_uid: final_uid,
+          total_rounds: initialRound,
+          results: gameHistory,
+          custom_code: currentCustomCode
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        window.location.href = `/worldcup/result/${data.game_id}/`;
+      } else {
+        alert("오류: " + JSON.stringify(data));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("서버 통신 오류");
     }
-
-    // 모든 ?�디???��?
-    function stopAllAudio() {
-        document.querySelectorAll('audio').forEach(a => {
-            a.pause();
-            a.currentTime = 0;
-        });
-        document.querySelectorAll('.card').forEach(c => {
-            c.classList.remove('playing-card');
-        });
-    }
-
-    // ?�악 ?�택
-    function selectMusic(side) {
-        stopAllAudio();
-
-        const left = candidates[currentPairIndex];
-        const right = candidates[currentPairIndex + 1];
-
-        let winner, loser;
-        if (side === 'left') {
-            winner = left;
-            loser = right;
-        } else {
-            winner = right;
-            loser = left;
-        }
-
-        nextRound.push(winner);
-
-        const rank = (candidates.length <= 2) ? 2 : candidates.length;
-        gameHistory.push({ music_id: loser.id, rank: rank });
-
-        currentPairIndex += 2;
-
-        if (currentPairIndex >= candidates.length) {
-            endRound();
-        } else {
-            updateDisplay();
-        }
-    }
-
-    // ?�운??종료
-    function endRound() {
-        if (candidates.length <= 2) {
-            const finalWinner = nextRound[0];
-            gameHistory.push({ music_id: finalWinner.id, rank: 1 });
-            sendResultToServer(finalWinner);
-        } else {
-            candidates = nextRound;
-            nextRound = [];
-            currentPairIndex = 0;
-            updateDisplay();
-        }
-    }
-
-    // 결과 ?�버 ?�송
-    async function sendResultToServer(winner) {
-        try {
-            const user_uid = "{% if user.is_authenticated %}{{ user.pk }}{% else %}{% endif %}";
-            const final_uid = user_uid ? user_uid : null;
-
-            const response = await fetch('/worldcup/save/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_uid: final_uid,
-                    total_rounds: 16,
-                    results: gameHistory,
-                    custom_code: currentCustomCode
-                })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                window.location.href = `/worldcup/result/${data.game_id}/`;
-            } else {
-                alert("?�???�패: " + JSON.stringify(data));
-            }
-        } catch (e) {
-            console.error("?�??�??�러", e);
-            alert("?�버 ?�신 ?�류");
-        }
-    }
+  }
 </script>
 {% endblock %}
-
