@@ -150,7 +150,19 @@ AWS_S3_REGION_NAME = 'ap-northeast-2'  # 서울 리전 (본인 리전에 맞게 
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 # S3 File Storage Setup
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            # 필요한 경우 추가 옵션 설정
+        },
+    },
+    "staticfiles": {
+        # 정적 파일은 로컬에서 관리하거나 S3를 쓰려면 여기도 S3Boto3Storage로 변경
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # 미디어 파일 URL 설정
 # 파일을 업로드하면 S3 URL이 반환됩니다.
