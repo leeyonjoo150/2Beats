@@ -9,7 +9,10 @@ from apps.twobeats_music_explore.models import MusicLike, MusicComment
 from apps.twobeats_video_explore.models import VideoLike, VideoComment
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from moviepy import VideoFileClip
+from django.core.files.base import ContentFile
+from PIL import Image
+import tempfile
+import io
 
 # === Music CRUD ===
 
@@ -209,22 +212,80 @@ def video_upload_start(request):
             video_file = form.cleaned_data['video_root']
             base_title = os.path.splitext(video_file.name)[0]
 
-            # 영상 재생 시간 자동 추출
-            try:
-                with VideoFileClip(video_file.temporary_file_path()) as clip:
-                    video_time = int(clip.duration)  # 초 단위
-            except Exception:
-                video_time = 0  # 추출 실패 시 0
-
             video = Video(
                 video_title=base_title,
                 video_singer=request.user.username or "Unknown",
                 video_type='etc',
                 video_root=video_file,
                 video_user=request.user,
-                video_time=video_time,
             )
             video.save()
+
+            # 🔥 썸네일 자동 생성
+            try:
+                import cv2
+                import numpy as np
+                
+                # 임시 파일로 비디오 저장
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_video:
+                    for chunk in video_file.chunks():
+                        tmp_video.write(chunk)
+                    tmp_video_path = tmp_video.name
+                
+
+
+                # OpenCV로 비디오 열기
+                cap = cv2.VideoCapture(tmp_video_path)
+                
+                # FPS와 총 프레임 수 가져오기
+                fps = cap.get(cv2.CAP_PROP_FPS)
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+                
+                # 1초 시점의 프레임 번호 계산 (또는 중간 프레임)
+                target_frame = min(int(fps), total_frames // 2) if total_frames > 0 else 0
+                cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+                
+                # 프레임 읽기
+                ret, frame = cap.read()
+                cap.release()
+                
+                if not ret:
+                    raise Exception("프레임을 읽을 수 없습니다")
+                
+
+                
+                # BGR을 RGB로 변환 (OpenCV는 BGR 사용)
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                # PIL Image로 변환
+                img = Image.fromarray(frame_rgb)
+                
+                # 리사이즈 (가로 320px 유지, 비율 유지)
+                img.thumbnail((320, 320), Image.Resampling.LANCZOS)
+
+                
+                # 메모리에 저장
+                thumb_io = io.BytesIO()
+                img.save(thumb_io, format='JPEG', quality=85)
+                thumb_io.seek(0)
+                
+                # Video 모델에 저장
+                video.video_thumbnail.save(
+                    f"{base_title}_thumb.jpg",
+                    ContentFile(thumb_io.read()),
+                    save=True
+                )
+
+                
+                # 정리
+                os.unlink(tmp_video_path)
+
+
+            except Exception as e:
+                import traceback
+                print(traceback.format_exc())
+                # 썸네일 생성 실패해도 비디오는 저장됨
 
             return redirect('twobeats_upload:video_update', pk=video.pk)
     else:
