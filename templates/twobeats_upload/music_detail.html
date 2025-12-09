@@ -1,127 +1,1200 @@
 {% extends "base.html" %}
+{% load music_extras %}
 
 {% block content %}
-<div class="tb-track-page">
+<div class="music-detail-page">
 
-  <!-- 상단 히어로 영역 -->
-  <div class="tb-track-hero">
-    <!-- 왼쪽: 재생/정보 -->
-    <section class="tb-track-main">
-      <header class="tb-track-header">
-        <div class="tb-track-label">Track</div>
-        <h1 class="tb-track-title">
-          {{ music.music_title }}
-        </h1>
-        <div class="tb-track-artist">
-          {{ music.music_singer }}
-        </div>
-        <div class="tb-music-stats">
-          <span class="tb-music-views">조회수 {{ music.music_count }}</span>
-          <span class="tb-music-likes">좋아요수 {{ music.music_like_count }}</span>
-        </div>
+  <!-- 상단 헤더 -->
+  <div class="detail-header">
+    <a href="{% url 'twobeats_upload:music_list' %}" class="back-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      <span>목록으로</span>
+    </a>
+    
+    <div class="header-actions">
+      <a href="{% url 'twobeats_upload:music_update' music.id %}" class="header-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        <span>수정</span>
+      </a>
+      <button class="header-btn delete-btn" onclick="if(confirm('정말 삭제하시겠습니까?')) window.location.href='{% url 'twobeats_upload:music_delete' music.id %}'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        <span>삭제</span>
+      </button>
+    </div>
+  </div>
 
-      </header>
-
-      <!-- 재생바 -->
-      <div class="tb-track-player">
-        {% if music.music_root %}
-          <audio controls class="tb-audio">
-            <source src="{{ music.music_root.url }}">
-            브라우저가 audio 태그를 지원하지 않습니다.
-          </audio>
+  <!-- 메인 컨텐츠 -->
+  <div class="detail-content">
+    
+    <!-- 왼쪽: 아트워크 & 플레이어 -->
+    <div class="detail-left">
+      <!-- 아트워크 -->
+      <div class="artwork-container">
+        {% if music.music_thumbnail %}
+          <img src="{{ music.music_thumbnail.url }}" alt="{{ music.music_title }}" class="artwork-image">
         {% else %}
-          <p class="tb-help-text">음원 파일이 없습니다.</p>
+          <div class="artwork-placeholder">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M9 18V5l12-2v13"></path>
+              <circle cx="6" cy="18" r="3"></circle>
+              <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+          </div>
         {% endif %}
+      </div>
+
+      <!-- 커스텀 오디오 플레이어 -->
+      <div class="audio-player">
+        <audio id="audio-element" src="{{ music.music_root.url }}"></audio>
+        
+        <div class="custom-audio-player">
+          <!-- 플레이/일시정지 버튼 -->
+          <button class="play-pause-btn" id="playPauseBtn">
+            <svg class="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="white">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <svg class="pause-icon" width="24" height="24" viewBox="0 0 24 24" fill="white" style="display: none;">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          </button>
+          
+          <!-- 시간 표시 -->
+          <div class="time-display">
+            <span id="currentTime">0:00</span>
+          </div>
+          
+          <!-- 프로그레스 바 -->
+          <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-handle" id="progressHandle"></div>
+          </div>
+          
+          <!-- 전체 시간 -->
+          <div class="time-display">
+            <span id="duration">0:00</span>
+          </div>
+          
+          <!-- 볼륨 컨트롤 -->
+          <div class="volume-control">
+            <button class="volume-btn" id="volumeBtn">
+              <svg class="volume-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+            </button>
+            <div class="volume-slider" id="volumeSlider">
+              <div class="volume-bar" id="volumeBar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 통계 (2개만) -->
+      <div class="stats-grid-two">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">재생</div>
+            <div class="stat-value" id="play-count">{{ music.music_count }}</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">좋아요</div>
+            <div class="stat-value" id="like-count">{{ music.music_like_count }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 정보 -->
+    <div class="detail-right">
+      
+      <!-- 제목 & 아티스트 -->
+      <div class="track-header">
+        <h1 class="track-title">{{ music.music_title }}</h1>
+        <p class="track-artist">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          {{ music.music_singer }}
+        </p>
       </div>
 
       <!-- 메타 정보 -->
-      <div class="tb-track-meta">
-        <div class="tb-track-stats">
-          <span class="tb-stat-item">
-            ▶ {{ music.music_count }} plays
-          </span>
+      <div class="track-meta">
+        <div class="meta-row">
+          <span class="meta-label">장르</span>
+          <span class="meta-value genre-badge">{{ music.get_music_type_display }}</span>
+        </div>
+        
+        <div class="meta-row">
+          <span class="meta-label">업로드</span>
+          <span class="meta-value">{{ music.music_created_at|date:"Y년 m월 d일" }}</span>
+        </div>
+        
+        <div class="meta-row">
+          <span class="meta-label">업로더</span>
+          <span class="meta-value">{{ music.uploader.username }}</span>
         </div>
 
-        <div class="tb-track-tags">
-          {% for tag in music.tags.all %}
-            <span class="tb-tag-pill">{{ tag.name }}</span>
-          {% empty %}
-            <span class="tb-tag-pill tb-tag-pill-empty">태그 없음</span>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-
-    <!-- 오른쪽: 앨범 아트 + 프로필 -->
-    <aside class="tb-track-side">
-      <div class="tb-track-artwork-card">
-        {% if music.music_thumbnail %}
-          <img src="{{ music.music_thumbnail.url }}"
-               alt="Artwork"
-               class="tb-track-artwork">
-        {% else %}
-          <div class="tb-track-artwork-placeholder">
-            <div class="tb-artwork-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24"
-                   fill="none" stroke="#94a3b8" stroke-width="1.5"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <path d="M21 15l-5-5L5 21"></path>
-              </svg>
-            </div>
-            <span class="tb-artwork-text">No artwork</span>
+        {% if music.tags.all %}
+        <div class="meta-row">
+          <span class="meta-label">태그</span>
+          <div class="tags-list">
+            {% for tag in music.tags.all %}
+              <span class="tag">#{{ tag.name }}</span>
+            {% endfor %}
           </div>
+        </div>
         {% endif %}
       </div>
 
-      <!-- 업로더 프로필 (간단) -->
-      <div class="tb-track-uploader">
-        <div class="tb-avatar">
-          {% if music.uploader %}
-            <span class="tb-avatar-initial">
-              {{ music.uploader.username|first|upper }}
-            </span>
-          {% else %}
-            <span class="tb-avatar-initial">U</span>
-          {% endif %}
-        </div>
-        <div class="tb-uploader-info">
-          <div class="tb-uploader-name">
-            {{ music.uploader.username }}
-          </div>
-          <div class="tb-uploader-caption">
-            Uploader
+      <!-- 파일 정보 -->
+      <div class="file-info">
+        <h3 class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+          파일 정보
+        </h3>
+        <div class="file-details">
+          <div class="file-row">
+            <span class="file-label">원본 파일</span>
+            <a href="{{ music.music_root.url }}" download class="file-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              다운로드
+            </a>
           </div>
         </div>
       </div>
-    </aside>
+
+    </div>
+
   </div>
 
-  <!-- 하단: 최소한의 네비게이션만 -->
-  <div class="tb-track-footer">
-    <a href="{% url 'twobeats_upload:music_list' %}" class="tb-link-light">
-      ← My Sound Space
-    </a>
-
-    <div class="tb-track-footer-actions">
-      <a href="{% url 'twobeats_upload:music_update' music.pk %}"
-         class="tb-link-light">
-        수정
-      </a>
-      <a href="{% url 'twobeats_upload:music_delete' music.pk %}"
-        onclick="return confirm('정말 삭제하시겠습니까?');">
-        삭제
-      </a>
+  <!-- 🔥 댓글 섹션 (full-width) -->
+  <div class="comments-section-full" id="commentsSection">
+    <h3 class="section-title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      댓글 <span class="comment-count-badge" id="comment-count-display">({{ music.comments.count }})</span>
+    </h3>
+    
+    <!-- 댓글 작성 폼 -->
+    {% if user.is_authenticated %}
+    <form class="comment-form" id="commentForm">
+      {% csrf_token %}
+      <textarea 
+        class="comment-input" 
+        id="commentInput"
+        placeholder="댓글을 입력하세요..."
+        rows="3"
+      ></textarea>
+      <div class="comment-form-actions">
+        <button type="submit" class="comment-submit-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+          <span>댓글 작성</span>
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <div class="comment-login-notice">
+      <p>댓글을 작성하려면 <a href="{% url 'login' %}">로그인</a>이 필요합니다.</p>
+    </div>
+    {% endif %}
+    
+    <!-- 댓글 리스트 -->
+    <div class="comments-list" id="commentsList">
+      {% for comment in music.comments.all %}
+      <div class="comment-item" data-comment-id="{{ comment.id }}">
+        <div class="comment-header">
+          <div class="comment-author">
+            <div class="author-avatar">{{ comment.user.username|slice:":1"|upper }}</div>
+            <div class="author-info">
+              <span class="author-name">{{ comment.user.username }}</span>
+              <span class="comment-time">{{ comment.created_at|timesince }} 전</span>
+            </div>
+          </div>
+          {% if comment.user == user %}
+          <button class="comment-delete-btn" data-comment-id="{{ comment.id }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+          {% endif %}
+        </div>
+        <div class="comment-content">{{ comment.content }}</div>
+      </div>
+      {% empty %}
+      <div class="no-comments">
+        <p>첫 번째 댓글을 남겨보세요!</p>
+      </div>
+      {% endfor %}
     </div>
   </div>
-</div>
-{% endblock %}
 
-    <footer class="tb-track-footer">
-      <a href="{% url 'twobeats_upload:music_update' music.pk %}" class="tb-link-ghost">수정</a>
-      <a href="{% url 'twobeats_upload:music_delete' music.pk %}" class="tb-link-ghost">삭제</a>
-      <a href="{% url 'twobeats_upload:music_list' %}" class="tb-link-back">
-        ← My Video Space
-      </a>
-    </footer>
+</div>
+
+<script>
+// CSRF 토큰
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+// 🔥 커스텀 오디오 플레이어
+(function() {
+  const audio = document.getElementById('audio-element');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const playIcon = playPauseBtn.querySelector('.play-icon');
+  const pauseIcon = playPauseBtn.querySelector('.pause-icon');
+  const currentTimeEl = document.getElementById('currentTime');
+  const durationEl = document.getElementById('duration');
+  const progressContainer = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
+  const progressHandle = document.getElementById('progressHandle');
+  const volumeBtn = document.getElementById('volumeBtn');
+  const volumeSlider = document.getElementById('volumeSlider');
+  const volumeBar = document.getElementById('volumeBar');
+  
+  let playCountSent = false;
+  
+  // 시간 포맷 (초 → 분:초)
+  function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  
+  // 플레이/일시정지
+  playPauseBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play();
+      playIcon.style.display = 'none';
+      pauseIcon.style.display = 'block';
+      
+      // 재생수 증가 (최초 1회만)
+      if (!playCountSent) {
+        fetch('{% url "twobeats_upload:music_play" music.id %}', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('play-count').textContent = data.play_count;
+            playCountSent = true;
+          }
+        })
+        .catch(error => console.error('Error:', error));
+      }
+    } else {
+      audio.pause();
+      playIcon.style.display = 'block';
+      pauseIcon.style.display = 'none';
+    }
+  });
+  
+  // 메타데이터 로드 (전체 시간)
+  audio.addEventListener('loadedmetadata', () => {
+    durationEl.textContent = formatTime(audio.duration);
+  });
+  
+  // 재생 시간 업데이트
+  audio.addEventListener('timeupdate', () => {
+    currentTimeEl.textContent = formatTime(audio.currentTime);
+    const progress = (audio.currentTime / audio.duration) * 100;
+    progressBar.style.width = `${progress}%`;
+    progressHandle.style.left = `${progress}%`;
+  });
+  
+  // 프로그레스 바 클릭
+  progressContainer.addEventListener('click', (e) => {
+    const rect = progressContainer.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = percent * audio.duration;
+  });
+  
+  // 볼륨 슬라이더
+  volumeSlider.addEventListener('click', (e) => {
+    const rect = volumeSlider.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    audio.volume = Math.max(0, Math.min(1, percent));
+    volumeBar.style.width = `${percent * 100}%`;
+  });
+  
+  // 볼륨 버튼 (음소거 토글)
+  volumeBtn.addEventListener('click', () => {
+    if (audio.volume > 0) {
+      audio.dataset.prevVolume = audio.volume;
+      audio.volume = 0;
+      volumeBar.style.width = '0%';
+    } else {
+      audio.volume = audio.dataset.prevVolume || 1;
+      volumeBar.style.width = `${audio.volume * 100}%`;
+    }
+  });
+  
+  // 재생 종료
+  audio.addEventListener('ended', () => {
+    playIcon.style.display = 'block';
+    pauseIcon.style.display = 'none';
+  });
+})();
+
+// 🔥 댓글 작성
+const commentForm = document.getElementById('commentForm');
+if (commentForm) {
+  commentForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const content = document.getElementById('commentInput').value.trim();
+    if (!content) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
+    
+    // FormData 생성
+    const formData = new FormData();
+    formData.append('content', content);
+    
+    fetch('{% url "twobeats_upload:music_comment_create" music.id %}', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // 댓글 입력창 초기화
+        document.getElementById('commentInput').value = '';
+        
+        // 댓글 수 업데이트
+        document.getElementById('comment-count-display').textContent = `(${data.comment_count})`;
+        
+        // 새 댓글 추가
+        const commentsList = document.getElementById('commentsList');
+        const noComments = commentsList.querySelector('.no-comments');
+        
+        // "첫 번째 댓글" 메시지 제거
+        if (noComments) {
+          noComments.remove();
+        }
+        
+        // 새 댓글 HTML 생성
+        const commentHTML = `
+          <div class="comment-item" data-comment-id="${data.comment.id}">
+            <div class="comment-header">
+              <div class="comment-author">
+                <div class="author-avatar">${data.comment.user_initial}</div>
+                <div class="author-info">
+                  <span class="author-name">${data.comment.user}</span>
+                  <span class="comment-time">방금 전</span>
+                </div>
+              </div>
+              ${data.comment.is_owner ? `
+              <button class="comment-delete-btn" data-comment-id="${data.comment.id}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+              ` : ''}
+            </div>
+            <div class="comment-content">${data.comment.content}</div>
+          </div>
+        `;
+        
+        // 리스트 맨 앞에 추가
+        commentsList.insertAdjacentHTML('afterbegin', commentHTML);
+        
+        // 삭제 버튼 이벤트 추가
+        const newDeleteBtn = commentsList.querySelector(`[data-comment-id="${data.comment.id}"] .comment-delete-btn`);
+        if (newDeleteBtn) {
+          newDeleteBtn.addEventListener('click', handleCommentDelete);
+        }
+      } else {
+        alert(data.error || '댓글 작성에 실패했습니다.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('댓글 작성 중 오류가 발생했습니다.');
+    });
+  });
+}
+
+// 🔥 댓글 삭제 핸들러
+function handleCommentDelete() {
+  if (confirm('댓글을 삭제하시겠습니까?')) {
+    const commentId = this.dataset.commentId;
+    
+    fetch(`/upload/comment/${commentId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // 댓글 삭제
+        const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
+        commentItem.remove();
+        
+        // 댓글 수 업데이트
+        document.getElementById('comment-count-display').textContent = `(${data.comment_count})`;
+        
+        // 댓글이 없으면 "첫 번째 댓글" 메시지 추가
+        const commentsList = document.getElementById('commentsList');
+        if (commentsList.children.length === 0) {
+          commentsList.innerHTML = '<div class="no-comments"><p>첫 번째 댓글을 남겨보세요!</p></div>';
+        }
+      } else {
+        alert(data.error || '댓글 삭제에 실패했습니다.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('댓글 삭제 중 오류가 발생했습니다.');
+    });
+  }
+}
+
+// 기존 삭제 버튼에 이벤트 추가
+document.querySelectorAll('.comment-delete-btn').forEach(btn => {
+  btn.addEventListener('click', handleCommentDelete);
+});
+</script>
+
+<style>
+/* ========================================
+   전체 레이아웃
+   ======================================== */
+.music-detail-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ========================================
+   상단 헤더
+   ======================================== */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.625rem;
+  color: #cbd5e1;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(192, 132, 252, 0.3);
+  color: #c084fc;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.625rem;
+  color: #cbd5e1;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(192, 132, 252, 0.3);
+  color: #c084fc;
+}
+
+.delete-btn:hover {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+/* ========================================
+   메인 컨텐츠
+   ======================================== */
+.detail-content {
+  display: grid;
+  grid-template-columns: 450px 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+/* ========================================
+   왼쪽: 아트워크 & 플레이어
+   ======================================== */
+.detail-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.artwork-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.artwork-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.artwork-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.1), rgba(124, 58, 237, 0.1));
+}
+
+/* 커스텀 오디오 플레이어 */
+.audio-player {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.1), rgba(124, 58, 237, 0.1));
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.custom-audio-player {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.play-pause-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c084fc, #7c3aed);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+}
+
+.play-pause-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(192, 132, 252, 0.6);
+}
+
+.play-pause-btn:active {
+  transform: scale(0.95);
+}
+
+.time-display {
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+}
+
+.progress-container {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  transition: height 0.2s;
+}
+
+.progress-container:hover {
+  height: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #c084fc, #7c3aed);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.1s;
+  position: relative;
+}
+
+.progress-handle {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  left: 0%;
+}
+
+.progress-container:hover .progress-handle {
+  opacity: 1;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.volume-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.volume-btn:hover {
+  color: #c084fc;
+}
+
+.volume-slider {
+  width: 80px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+}
+
+.volume-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #c084fc, #7c3aed);
+  border-radius: 3px;
+  width: 100%;
+  transition: width 0.1s;
+}
+
+/* 통계 그리드 (2개) */
+.stats-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.875rem;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(192, 132, 252, 0.3);
+}
+
+.stat-icon {
+  color: #c084fc;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* ========================================
+   오른쪽: 정보
+   ======================================== */
+.detail-right {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* 제목 & 아티스트 */
+.track-header {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.track-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #ffffff, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.track-artist {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.25rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* 메타 정보 */
+.track-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.meta-label {
+  min-width: 80px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.meta-value {
+  font-size: 1rem;
+  color: #e2e8f0;
+}
+
+.genre-badge {
+  padding: 0.375rem 1rem;
+  background: rgba(192, 132, 252, 0.2);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  border-radius: 0.5rem;
+  color: #c084fc;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* 태그 */
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  padding: 0.375rem 0.875rem;
+  background: rgba(192, 132, 252, 0.15);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 0.5rem;
+  color: #c084fc;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* 파일 정보 */
+.file-info {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0 0 1rem 0;
+}
+
+.file-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.file-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.file-row:last-child {
+  border-bottom: none;
+}
+
+.file-label {
+  font-size: 0.9375rem;
+  color: #94a3b8;
+}
+
+.file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(192, 132, 252, 0.15);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 0.5rem;
+  color: #c084fc;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.file-link:hover {
+  background: rgba(192, 132, 252, 0.25);
+  border-color: #c084fc;
+}
+
+/* ========================================
+   🔥 댓글 섹션 (full-width)
+   ======================================== */
+.comments-section-full {
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  scroll-margin-top: 100px;
+}
+
+.comment-count-badge {
+  color: #c084fc;
+}
+
+/* 댓글 작성 폼 */
+.comment-form {
+  margin: 1.5rem 0;
+}
+
+.comment-input {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: #c084fc;
+  background: rgba(192, 132, 252, 0.1);
+}
+
+.comment-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.comment-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  background: linear-gradient(135deg, #c084fc, #7c3aed);
+  border: none;
+  border-radius: 0.625rem;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(192, 132, 252, 0.3);
+}
+
+.comment-submit-btn:hover {
+  background: linear-gradient(135deg, #a855f7, #6d28d9);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(192, 132, 252, 0.4);
+}
+
+/* 로그인 안내 */
+.comment-login-notice {
+  padding: 1.5rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.comment-login-notice p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.comment-login-notice a {
+  color: #c084fc;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.comment-login-notice a:hover {
+  text-decoration: underline;
+}
+
+/* 댓글 리스트 */
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.comment-item {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+
+.comment-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(192, 132, 252, 0.2);
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.comment-author {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.author-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.author-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.comment-time {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.comment-delete-btn {
+  padding: 0.5rem;
+  background: none;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 0.5rem;
+  color: #f87171;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.comment-delete-btn:hover {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: #f87171;
+}
+
+.comment-content {
+  color: #cbd5e1;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.no-comments {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+  font-size: 0.9375rem;
+}
+
+/* ========================================
+   반응형
+   ======================================== */
+@media (max-width: 1024px) {
+  .detail-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .detail-left {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .track-title {
+    font-size: 2rem;
+  }
+
+  .stats-grid-two {
+    grid-template-columns: 1fr;
+  }
+
+  .meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .custom-audio-player {
+    flex-wrap: wrap;
+  }
+  
+  .volume-control {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+</style>
+{% endblock %}
