@@ -1,0 +1,26 @@
+# Git 관리 디렉토리 제외
+.git
+.gitignore
+
+# 가상 환경 제외 (로컬 개발용)
+venv/
+env/
+.venv/
+
+# 환경 변수 파일 제외 (보안 중요)
+.env
+
+# Python 컴파일 파일 및 캐시 제외
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 로컬 미디어 및 정적 파일 (S3 사용 시 불필요, collectstatic으로 모아짐)
+media/
+staticfiles/
+
+# 로컬 DB 파일 (Docker에서는 postgres 컨테이너 사용하므로 제외)
+db.sqlite3
+
+# 기타 시스템 파일
+.DS_Store
