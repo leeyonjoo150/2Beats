@@ -6,7 +6,6 @@
     const fileInput = document.getElementById('{{ form.profile_image.id_for_label }}');
     const preview = document.getElementById('preview-avatar');
     const current = document.getElementById('current-avatar');
-    const deleteCheckbox = document.getElementById('delete-profile-image');
 
     if (fileInput) {
       fileInput.addEventListener('change', (e) => {
@@ -20,25 +19,8 @@
         preview.src = url;
         preview.style.display = 'block';
         if (current) current.style.opacity = 0.4;
-        
-        // 새 파일 선택 시 삭제 체크박스 해제
-        if (deleteCheckbox) deleteCheckbox.checked = false;
       });
     }
-    
-    // 삭제 체크박스 클릭 시 처리
-    if (deleteCheckbox) {
-      deleteCheckbox.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          if (fileInput) fileInput.value = '';
-          preview.style.display = 'none';
-          if (current) current.style.opacity = 0.4;
-        } else {
-          if (current) current.style.opacity = 1;
-        }
-      });
-    }
-    
     // 2. 전화번호 숫자만 입력 가능하도록 제한 (추가된 코드)
     const phoneInput = document.getElementById('{{ form.phone_number.id_for_label }}');
     if (phoneInput) {
@@ -128,17 +110,6 @@
           <img src="" alt="미리보기" id="preview-avatar" style="display:none; width:72px; height:72px; border-radius:50%; object-fit:cover; border:1px solid var(--border);">
         </div>
         {{ form.profile_image }}
-        
-        <!-- ✅ 이미지 삭제 체크박스 추가 (여기만 추가됨!) -->
-        {% if request.user.profile_image %}
-          <div style="margin-top:8px;">
-            <label style="display:flex; align-items:center; gap:6px; color:rgba(255,255,255,0.6); font-size:13px; cursor:pointer;">
-              <input type="checkbox" name="delete_profile_image" id="delete-profile-image" value="1" style="cursor:pointer;">
-              <span>이미지 삭제</span>
-            </label>
-          </div>
-        {% endif %}
-        
         {% if form.profile_image.errors %}
           <ul class="errorlist" style="margin:6px 0 0; padding:0; list-style:none; color:#fecaca; font-size:12px;">
             {% for error in form.profile_image.errors %}<li>{{ error }}</li>{% endfor %}
