@@ -49,4 +49,7 @@ COPY . .
 EXPOSE 8000
 
 # Gunicorn 실행
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "config.wsgi:application"]
+CMD python manage.py migrate && \
+    python manage.py collectstatic --noinput && \
+    python manage.py init_tags && \
+    gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 config.wsgi:application
