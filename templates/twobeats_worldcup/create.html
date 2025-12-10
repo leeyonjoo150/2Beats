@@ -145,8 +145,18 @@
           const data = await response.json();
 
           if (response.ok) {
-              alert("생성 완료! 공유 URL이 클립보드에 복사됐어요.");
-              navigator.clipboard.writeText(window.location.origin + data.share_url);
+              alert("생성 완료! (HTTPS 환경이 아니면 클립보드 복사가 안 될 수 있습니다.)");
+              
+              // [수정] 클립보드 기능이 있을 때만 실행하도록 안전장치 추가
+              try {
+                  if (navigator.clipboard) {
+                      navigator.clipboard.writeText(window.location.origin + data.share_url);
+                  }
+              } catch (err) {
+                  console.log("클립보드 복사 실패:", err);
+              }
+
+              // 에러가 나도 페이지 이동은 무조건 실행
               window.location.href = data.share_url;
           } else {
               alert("오류: " + (data.error || JSON.stringify(data)));
