@@ -410,10 +410,18 @@
                         <span>영상</span>
                     </a>
 
-                    <!-- 유저 프로필 버튼 (아바타 + 이름) -->
+                    <!-- ✅ 유저 프로필 버튼 (아바타 + 이름) - 여기 수정됨! -->
                     <a href="{% url 'profile' %}" class="navbar-user">
-                        <!-- 유저 이름의 첫 글자를 대문자로 표시 -->
-                        <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
+                        {% if user.profile_image %}
+                            <!-- 프로필 이미지가 있으면 이미지 표시 -->
+                            <img src="{{ user.profile_image.url }}" 
+                                 alt="{{ user.username }}" 
+                                 class="user-avatar"
+                                 style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+                        {% else %}
+                            <!-- 프로필 이미지가 없으면 이니셜 표시 -->
+                            <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
+                        {% endif %}
                         <span>{{ user.username }}</span>
                     </a>
 
