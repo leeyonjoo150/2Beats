@@ -373,18 +373,6 @@
                 <span>2BEATS</span>
             </a>
 
-            <!-- 검색바: 음악 검색 페이지로 연결 -->
-            <div class="navbar-search">
-                <form action="{% url 'music_explore:search' %}" method="get">
-                    <input type="text" name="q" placeholder="아티스트, 트랙, 장르 검색..." />
-                    <!-- 검색 아이콘 (SVG) -->
-                    <svg class="navbar-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                </form>
-            </div>
-
             <!-- 액션 버튼들: 로그인 상태에 따라 다른 버튼 표시 -->
             <div class="navbar-actions">
                 {% if user.is_authenticated %}
