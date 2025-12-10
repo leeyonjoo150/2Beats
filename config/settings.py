@@ -83,13 +83,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': dj_database_url.config(
         # .env에 DATABASE_URL이 없을 경우를 대비한 기본값 (Docker 내부 통신용)
@@ -124,54 +117,55 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# AWS S3 Settings
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = 'ap-northeast-2'  # 서울 리전
+AWS_S3_SIGNATURE_VERSION = 's3v4'
 
-STATIC_URL = '/static/'
+# S3 Custom Domain
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+
+# S3 기본 설정
+AWS_DEFAULT_ACL = 'public-read'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+# Static과 Media 위치 분리
+STATICFILES_LOCATION = 'static'
+MEDIAFILES_LOCATION = 'media'
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATICFILES_LOCATION}/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files (User uploads)
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/'
+
+# Storage 백엔드 설정
+STORAGES = {
+    "default": {  # Media 파일용 (유저 업로드)
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "location": MEDIAFILES_LOCATION,
+        },
+    },
+    "staticfiles": {  # Static 파일용 (CSS, JS, 이미지)
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "location": STATICFILES_LOCATION,
+        },
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Media 파일 설정 (추가)
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = BASE_DIR / 'media'
-
-# AWS S3 Settings
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_REGION_NAME = 'ap-northeast-2'  # 서울 리전 (본인 리전에 맞게 수정)
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-
-# S3 File Storage Setup
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        "OPTIONS": {
-            # 필요한 경우 추가 옵션 설정
-        },
-    },
-    "staticfiles": {
-        # 정적 파일은 로컬에서 관리하거나 S3를 쓰려면 여기도 S3Boto3Storage로 변경
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
-
-# 미디어 파일 URL 설정
-# 파일을 업로드하면 S3 URL이 반환됩니다.
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-
-# (옵션) 정적 파일(CSS/JS)도 S3에 올리고 싶다면 아래 설정 추가
-# STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-# STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # Custom User Model
 AUTH_USER_MODEL = 'twobeats_account.User'
