@@ -128,7 +128,7 @@ AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 
 # S3 기본 설정
-AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = None
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
@@ -174,5 +174,3 @@ AUTH_USER_MODEL = 'twobeats_account.User'
 LOGIN_URL = '/account/login/'
 LOGIN_REDIRECT_URL = '/home/'
 LOGOUT_REDIRECT_URL = '/account/login/'
-
-AWS_DEFAULT_ACL = None
