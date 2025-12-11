@@ -4,7 +4,7 @@
 
 **🔗 Links**
 - **사이트**: [2beats.kro.kr](http://2beats.kro.kr)
-- **문서**: [Notion 프로젝트 문서](https://carbonated-cover-25d.notion.site/2b038d77287181f2b4c4ef7a7cfe774c)
+- **문서**: [Notion 프로젝트 문서](https://www.notion.so/likelion/2-2aa44860a4f48081b5b7e93e32b07836)
 
 ## 목차
 
